@@ -21,6 +21,14 @@ use std::io;
 const GL_TEXTURE_MAX_ANISOTROPY_EXT: u32 = 0x84FE;
 const GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT: u32 = 0x84FF;
 
+// Default value for the color buffer.
+const CLEAR_COLOR: [f32; 4] = [0.2_f32, 0.2_f32, 0.2_f32, 1.0_f32];
+// Default value for the depth buffer.
+const CLEAR_DEPTH: [f32; 4] = [1.0_f32, 1.0_f32, 1.0_f32, 1.0_f32];
+
+const WIDTH: u32 = 640;
+const HEIGHT: u32 = 480;
+
 
 /// Load texture image into the GPU.
 fn send_to_gpu_texture(atlas: &TextureAtlas2D, wrapping_mode: GLuint) -> Result<GLuint, String> {
@@ -73,6 +81,43 @@ fn send_to_gpu_shaders(game: &mut backend::GLState, source: ShaderSource) -> GLu
     sp
 }
 
+/// Initialize the logger.
+fn init_logger(log_file: &str) {
+    file_logger::init(log_file).expect("Failed to initialize logger.");
+}
+
+/// Create and OpenGL context.
+fn init_gl(width: u32, height: u32) -> backend::GLState {
+    let gl_state = match backend::start_gl(width, height) {
+        Ok(val) => val,
+        Err(e) => {
+            panic!("Failed to Initialize OpenGL context. Got error: {}", e);
+        }
+    };
+
+    gl_state
+}
+
 fn main() {
-    println!("Hello, world!");
+    init_logger("arcball_demo.log");
+    let mut gl_state = init_gl(WIDTH, HEIGHT);
+    while !gl_state.window.should_close() {
+        let elapsed = backend::update_timers(&mut gl_state);
+        backend::update_fps_counter(&mut gl_state);
+        gl_state.glfw.poll_events();
+        match gl_state.window.get_key(Key::Escape) {
+            Action::Press | Action::Repeat => {
+                gl_state.window.set_should_close(true);
+            }
+            _ => {}
+        }
+
+        unsafe {
+            gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
+            gl::ClearBufferfv(gl::DEPTH, 0, &CLEAR_DEPTH[0] as *const GLfloat);
+            gl::Viewport(0, 0, WIDTH as GLint, HEIGHT as GLint);
+        }
+
+        gl_state.window.swap_buffers();
+    }
 }
