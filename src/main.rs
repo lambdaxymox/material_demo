@@ -31,6 +31,13 @@ const CLEAR_DEPTH: [f32; 4] = [1.0_f32, 1.0_f32, 1.0_f32, 1.0_f32];
 const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 
+fn load_mesh() -> ObjMesh {
+    let buffer = include_bytes!("../assets/teapot.obj");
+    let mesh = mini_obj::load_from_memory(buffer).unwrap();
+
+    mesh
+}
+
 
 /// Load texture image into the GPU.
 fn send_to_gpu_texture(atlas: &TextureAtlas2D, wrapping_mode: GLuint) -> Result<GLuint, String> {
@@ -101,6 +108,7 @@ fn init_gl(width: u32, height: u32) -> backend::GLState {
 }
 
 fn main() {
+    let mesh = load_mesh();
     init_logger("arcball_demo.log");
     let mut gl_state = init_gl(WIDTH, HEIGHT);
     while !gl_state.window.should_close() {
