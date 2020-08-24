@@ -9,6 +9,7 @@ glfw = "0.39.1"
 log = "0.4.11"
 file_logger = { git = "https://github.com/lambdaxymox/file-logger" }
 gdmath = { git = "https://github.com/lambdaxymox/gdmath" }
+mini_obj = { git = "https://github.com/lambdaxymox/mini_obj" }
 tex_atlas = { git = "https://github.com/lambdaxymox/tex_atlas" }
 
 [build-dependencies]

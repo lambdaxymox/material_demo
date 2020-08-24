@@ -2,17 +2,19 @@ extern crate glfw;
 extern crate gdmath;
 extern crate log;
 extern crate file_logger;
+extern crate mini_obj;
+
 
 mod gl {
     include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
 }
 
 mod backend;
-mod mesh;
 
 use glfw::{Action, Context, Key};
 use gl::types::{GLfloat, GLint, GLuint, GLvoid, GLsizeiptr};
 use log::{info};
+use mini_obj::ObjMesh;
 use tex_atlas::TextureAtlas2D;
 use std::io;
 
@@ -120,4 +122,6 @@ fn main() {
 
         gl_state.window.swap_buffers();
     }
+
+    info!("END LOG");
 }
