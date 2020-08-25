@@ -9,7 +9,7 @@ use gdmath::{
 use std::fmt;
 
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct CameraSpecification<S> {
     near: S,
     far: S,
@@ -28,7 +28,7 @@ impl<S> CameraSpecification<S> where S: gdmath::ScalarFloat {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CameraKinematics<S> {
     speed: S,
     yaw_speed: S,
@@ -46,7 +46,8 @@ impl<S> CameraKinematics<S> where S: gdmath::ScalarFloat {
         position: Vector3<S>, 
         forward: Vector4<S>, 
         right: Vector4<S>, 
-        up: Vector4<S>, axis: Quaternion<S>) -> CameraKinematics<S> {
+        up: Vector4<S>, 
+        axis: Quaternion<S>) -> CameraKinematics<S> {
 
         CameraKinematics {
             speed: speed,
@@ -58,6 +59,24 @@ impl<S> CameraKinematics<S> where S: gdmath::ScalarFloat {
             axis: axis,
         }
 
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct CameraAttitude<S> {
+    roll: S,
+    pitch: S,
+    yaw: S,
+}
+
+impl<S> CameraAttitude<S> where S: gdmath::ScalarFloat {
+    #[inline]
+    pub fn new(roll: S, pitch: S, yaw: S) -> CameraAttitude<S> {
+        CameraAttitude {
+            roll: roll,
+            pitch: pitch,
+            yaw: yaw,
+        }
     }
 }
 
@@ -136,29 +155,64 @@ impl<S> Camera<S> where S: gdmath::ScalarFloat {
         }
     }
 
-    /// Get the camera's eye position.
+    /// Get the camera's eye position in world space.
     #[inline]
     pub fn position(&self) -> Vector3<S> { 
         self.position
     }
 
-    /// Get the camera's up direction.
+    /// Get the camera's up direction in world space.
     #[inline]
     pub fn up_axis(&self) -> Vector3<S> {
         Vector3::new(self.up.x, self.up.y, self.up.z)
     }
 
-    /// Get the camera's right axis.
+    /// Get the camera's right axis in world space.
     #[inline]
     pub fn right_axis(&self) -> Vector3<S> {
         Vector3::new(self.right.x, self.right.y, self.right.z)
     }
 
-    /// Get the camera's forward axis.
+    /// Get the camera's forward axis in world space.
     #[inline]
     pub fn forward_axis(&self) -> Vector3<S> {
         Vector3::new(self.forward.x, self.forward.y, self.forward.z)
     }
 
+    /// Update the camera position in world space.
+    #[inline]
+    pub fn update(&mut self, delta_position: Vector3<S>, delta_attitude: CameraAttitude<S>) {
+        // Update the axis of rotation of the camera.
+        let q_yaw = Quaternion::from_axis_deg(
+            Degrees(delta_attitude.yaw), gdmath::vec3(self.up)
+        );
+        self.axis = q_yaw * self.axis;
+        let q_pitch = Quaternion::from_axis_deg(
+            Degrees(delta_attitude.pitch), gdmath::vec3(self.right)
+        );
+        self.axis = q_pitch * self.axis;
+        let q_roll = Quaternion::from_axis_deg(
+            Degrees(delta_attitude.roll), gdmath::vec3(self.forward)
+        );
+        self.axis = q_roll * self.axis;
 
+        // Update the camera axes so we can rotate the camera about the new rotation axes.
+        let zero = S::zero();
+        let one = S::one();
+        let rot_mat_inv = Matrix4::from(self.axis);
+        self.forward = rot_mat_inv * gdmath::vec4((zero, zero, -one, zero));
+        self.right   = rot_mat_inv * gdmath::vec4((one, zero, zero, zero));
+        self.up      = rot_mat_inv * gdmath::vec4((zero, one, zero, zero));
+
+        // Update the camera position.
+        self.position += gdmath::vec3(self.forward) * -delta_position.z;
+        self.position += gdmath::vec3(self.up)      *  delta_position.y;
+        self.position += gdmath::vec3(self.right)   *  delta_position.x;
+
+        /// Update the camera matrices.
+        let trans_mat_inv = Matrix4::from_translation(self.position);
+        self.rot_mat = rot_mat_inv.inverse().unwrap();
+        self.trans_mat = trans_mat_inv.inverse().unwrap();
+        self.view_mat = self.rot_mat * self.trans_mat;
+    }
 }

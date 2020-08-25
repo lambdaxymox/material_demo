@@ -15,6 +15,7 @@ mod camera;
 use camera::{
     CameraSpecification,
     CameraKinematics,
+    CameraAttitude,
     Camera
 };
 
@@ -260,6 +261,11 @@ fn main() {
                 context.window.set_should_close(true);
             }
             _ => {}
+        }
+
+        if cam_moved {
+            let attitude = CameraAttitude::new(cam_roll, cam_pitch, cam_yaw);
+            camera.update(move_to, attitude);
         }
 
         unsafe {
