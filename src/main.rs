@@ -10,7 +10,18 @@ mod gl {
 }
 
 mod backend;
+mod camera;
 
+use camera::{
+    CameraSpecification,
+    CameraKinematics,
+    Camera
+};
+
+use gdmath::{
+    Degrees,
+    Quaternion
+};
 use glfw::{Action, Context, Key};
 use gl::types::{GLfloat, GLint, GLuint, GLvoid, GLsizeiptr};
 use log::{info};
@@ -36,6 +47,25 @@ fn load_mesh() -> ObjMesh {
     let mesh = mini_obj::load_from_memory(buffer).unwrap();
 
     mesh
+}
+
+fn create_camera(width: u32, height: u32) -> Camera<f32> {
+    let near = 0.1;
+    let far = 100.0;
+    let fovy = Degrees(67.0);
+    let aspect = width as f32 / height as f32;
+    let spec = CameraSpecification::new(near, far, fovy, aspect);
+
+    let speed = 5.0;
+    let yaw_speed = 50.0;
+    let position = gdmath::vec3((0.0, 0.0, 10.0));
+    let forward = gdmath::vec4((0.0, 0.0, 1.0, 0.0));
+    let right = gdmath::vec4((1.0, 0.0, 0.0, 0.0));
+    let up  = gdmath::vec4((0.0, 1.0, 0.0, 0.0));
+    let axis = Quaternion::new(0.0, 0.0, 0.0, -1.0);
+    let kinematics = CameraKinematics::new(speed, yaw_speed, position, forward, right, up, axis);
+
+    Camera::new(spec, kinematics)
 }
 
 
@@ -97,27 +127,137 @@ fn init_logger(log_file: &str) {
 
 /// Create and OpenGL context.
 fn init_gl(width: u32, height: u32) -> backend::GLState {
-    let gl_state = match backend::start_gl(width, height) {
+    let context = match backend::start_gl(width, height) {
         Ok(val) => val,
         Err(e) => {
             panic!("Failed to Initialize OpenGL context. Got error: {}", e);
         }
     };
 
-    gl_state
+    context
 }
 
 fn main() {
     let mesh = load_mesh();
     init_logger("arcball_demo.log");
-    let mut gl_state = init_gl(WIDTH, HEIGHT);
-    while !gl_state.window.should_close() {
-        let elapsed = backend::update_timers(&mut gl_state);
-        backend::update_fps_counter(&mut gl_state);
-        gl_state.glfw.poll_events();
-        match gl_state.window.get_key(Key::Escape) {
+    let mut camera = create_camera(WIDTH, HEIGHT);
+    let mut context = init_gl(WIDTH, HEIGHT);
+    while !context.window.should_close() {
+        let elapsed_seconds = backend::update_timers(&mut context);
+        backend::update_fps_counter(&mut context);
+        context.glfw.poll_events();
+        match context.window.get_key(Key::Escape) {
             Action::Press | Action::Repeat => {
-                gl_state.window.set_should_close(true);
+                context.window.set_should_close(true);
+            }
+            _ => {}
+        }
+
+        // Camera control keys.
+        let mut cam_moved = false;
+        let mut move_to = gdmath::vec3((0.0, 0.0, 0.0));
+        let mut cam_yaw = 0.0;
+        let mut cam_pitch = 0.0;
+        let mut cam_roll = 0.0;
+        match context.window.get_key(Key::A) {
+            Action::Press | Action::Repeat => {
+                move_to.x -= camera.speed * (elapsed_seconds as GLfloat);
+                cam_moved = true;
+            }
+            _ => {}
+            }
+        match context.window.get_key(Key::D) {
+            Action::Press | Action::Repeat => {
+                move_to.x += camera.speed * (elapsed_seconds as GLfloat);
+                cam_moved = true;
+            }
+            _ => {}
+        }
+        match context.window.get_key(Key::Q) {
+            Action::Press | Action::Repeat => {
+                move_to.y += camera.speed * (elapsed_seconds as GLfloat);
+                cam_moved = true;
+            }
+            _ => {}
+        }
+        match context.window.get_key(Key::E) {
+            Action::Press | Action::Repeat => {
+                move_to.y -= camera.speed * (elapsed_seconds as GLfloat);
+                cam_moved = true;
+            }
+            _ => {}
+        }
+        match context.window.get_key(Key::W) {
+            Action::Press | Action::Repeat => {
+                move_to.z -= camera.speed * (elapsed_seconds as GLfloat);
+                cam_moved = true;
+            }
+            _ => {}
+        }
+        match context.window.get_key(Key::S) {
+            Action::Press | Action::Repeat => {
+                move_to.z += camera.speed * (elapsed_seconds as GLfloat);
+                cam_moved = true;
+            }
+            _ => {}
+        }
+        match context.window.get_key(Key::Left) {
+            Action::Press | Action::Repeat => {
+                cam_yaw += camera.yaw_speed * (elapsed_seconds as GLfloat);
+                let q_yaw = Quaternion::from_axis_deg(Degrees(cam_yaw), camera.up_axis());
+                camera.axis = q_yaw * &camera.axis;
+                cam_moved = true;
+            }
+            _ => {}
+        }
+        match context.window.get_key(Key::Right) {
+            Action::Press | Action::Repeat => {
+                cam_yaw -= camera.yaw_speed * (elapsed_seconds as GLfloat);
+                let q_yaw = Quaternion::from_axis_deg(Degrees(cam_yaw), camera.up_axis());
+                camera.axis = q_yaw * &camera.axis;
+                cam_moved = true;
+            }
+            _ => {}
+        }
+        match context.window.get_key(Key::Up) {
+            Action::Press | Action::Repeat => {
+                cam_pitch += camera.yaw_speed * (elapsed_seconds as GLfloat);
+                let q_pitch = Quaternion::from_axis_deg(Degrees(cam_pitch), camera.right_axis());
+                camera.axis = q_pitch * &camera.axis;
+                cam_moved = true;
+            }
+            _ => {}
+        }
+        match context.window.get_key(Key::Down) {
+            Action::Press | Action::Repeat => {
+                cam_pitch -= camera.yaw_speed * (elapsed_seconds as GLfloat);
+                let q_pitch = Quaternion::from_axis_deg(Degrees(cam_pitch), camera.right_axis());
+                camera.axis = q_pitch * &camera.axis;
+                cam_moved = true;
+            }
+            _ => {}
+        }
+        match context.window.get_key(Key::Z) {
+            Action::Press | Action::Repeat => {
+                cam_roll -= camera.yaw_speed * (elapsed_seconds as GLfloat);
+                let q_roll = Quaternion::from_axis_deg(Degrees(cam_roll), camera.forward_axis());
+                camera.axis = q_roll * &camera.axis;
+                cam_moved = true;
+            }
+            _ => {}
+        }
+        match context.window.get_key(Key::C) {
+            Action::Press | Action::Repeat => {
+                cam_roll += camera.yaw_speed * (elapsed_seconds as GLfloat);
+                let q_roll = Quaternion::from_axis_deg(Degrees(cam_roll), camera.forward_axis());
+                camera.axis = q_roll * &camera.axis;
+                cam_moved = true;
+            }
+            _ => {}
+        }
+        match context.window.get_key(Key::Escape) {
+            Action::Press | Action::Repeat => {
+                context.window.set_should_close(true);
             }
             _ => {}
         }
@@ -128,7 +268,7 @@ fn main() {
             gl::Viewport(0, 0, WIDTH as GLint, HEIGHT as GLint);
         }
 
-        gl_state.window.swap_buffers();
+        context.window.swap_buffers();
     }
 
     info!("END LOG");
