@@ -157,9 +157,7 @@ fn main() {
         // Camera control keys.
         let mut cam_moved = false;
         let mut move_to = gdmath::vec3((0.0, 0.0, 0.0));
-        let mut cam_yaw = 0.0;
-        let mut cam_pitch = 0.0;
-        let mut cam_roll = 0.0;
+        let mut cam_attitude = CameraAttitude::new(0.0, 0.0, 0.0);
         match context.window.get_key(Key::A) {
             Action::Press | Action::Repeat => {
                 move_to.x -= camera.speed * (elapsed_seconds as GLfloat);
@@ -204,54 +202,42 @@ fn main() {
         }
         match context.window.get_key(Key::Left) {
             Action::Press | Action::Repeat => {
-                cam_yaw += camera.yaw_speed * (elapsed_seconds as GLfloat);
-                let q_yaw = Quaternion::from_axis_deg(Degrees(cam_yaw), camera.up_axis());
-                camera.axis = q_yaw * &camera.axis;
+                cam_attitude.yaw += camera.yaw_speed * (elapsed_seconds as GLfloat);
                 cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::Right) {
             Action::Press | Action::Repeat => {
-                cam_yaw -= camera.yaw_speed * (elapsed_seconds as GLfloat);
-                let q_yaw = Quaternion::from_axis_deg(Degrees(cam_yaw), camera.up_axis());
-                camera.axis = q_yaw * &camera.axis;
+                cam_attitude.yaw -= camera.yaw_speed * (elapsed_seconds as GLfloat);
                 cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::Up) {
             Action::Press | Action::Repeat => {
-                cam_pitch += camera.yaw_speed * (elapsed_seconds as GLfloat);
-                let q_pitch = Quaternion::from_axis_deg(Degrees(cam_pitch), camera.right_axis());
-                camera.axis = q_pitch * &camera.axis;
+                cam_attitude.pitch += camera.yaw_speed * (elapsed_seconds as GLfloat);
                 cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::Down) {
             Action::Press | Action::Repeat => {
-                cam_pitch -= camera.yaw_speed * (elapsed_seconds as GLfloat);
-                let q_pitch = Quaternion::from_axis_deg(Degrees(cam_pitch), camera.right_axis());
-                camera.axis = q_pitch * &camera.axis;
+                cam_attitude.pitch -= camera.yaw_speed * (elapsed_seconds as GLfloat);
                 cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::Z) {
             Action::Press | Action::Repeat => {
-                cam_roll -= camera.yaw_speed * (elapsed_seconds as GLfloat);
-                let q_roll = Quaternion::from_axis_deg(Degrees(cam_roll), camera.forward_axis());
-                camera.axis = q_roll * &camera.axis;
+                cam_attitude.roll -= camera.yaw_speed * (elapsed_seconds as GLfloat);
                 cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::C) {
             Action::Press | Action::Repeat => {
-                cam_roll += camera.yaw_speed * (elapsed_seconds as GLfloat);
-                let q_roll = Quaternion::from_axis_deg(Degrees(cam_roll), camera.forward_axis());
-                camera.axis = q_roll * &camera.axis;
+                cam_attitude.roll += camera.yaw_speed * (elapsed_seconds as GLfloat);
                 cam_moved = true;
             }
             _ => {}
@@ -264,8 +250,7 @@ fn main() {
         }
 
         if cam_moved {
-            let attitude = CameraAttitude::new(cam_roll, cam_pitch, cam_yaw);
-            camera.update(move_to, attitude);
+            camera.update(move_to, cam_attitude);
         }
 
         unsafe {

@@ -64,9 +64,9 @@ impl<S> CameraKinematics<S> where S: gdmath::ScalarFloat {
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct CameraAttitude<S> {
-    roll: S,
-    pitch: S,
-    yaw: S,
+    pub roll: S,
+    pub pitch: S,
+    pub yaw: S,
 }
 
 impl<S> CameraAttitude<S> where S: gdmath::ScalarFloat {
