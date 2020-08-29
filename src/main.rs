@@ -108,6 +108,7 @@ struct ShaderSource {
     frag_source: &'static str,
 }
 
+            
 fn send_to_gpu_shaders(game: &mut backend::GLState, source: ShaderSource) -> GLuint {
     let mut vert_reader = io::Cursor::new(source.vert_source);
     let mut frag_reader = io::Cursor::new(source.frag_source);
