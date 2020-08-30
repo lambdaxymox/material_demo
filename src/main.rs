@@ -21,7 +21,9 @@ use camera::{
 
 use gdmath::{
     Degrees,
-    Quaternion
+    Quaternion,
+    Matrix4,
+    Storage,
 };
 use glfw::{Action, Context, Key};
 use gl::types::{GLfloat, GLint, GLuint, GLvoid, GLsizeiptr};
@@ -69,6 +71,32 @@ fn create_camera(width: u32, height: u32) -> Camera<f32> {
     let kinematics = CameraKinematics::new(speed, yaw_speed, position, forward, right, up, axis);
 
     Camera::new(spec, kinematics)
+}
+
+struct Uniforms {
+    model_mat: Matrix4<f32>,
+    camera: Camera<f32>,
+}
+
+fn send_to_gpu_uniforms(shader: GLuint, uniforms: Uniforms) {
+    let model_mat_loc = unsafe {
+        gl::GetUniformLocation(shader, backend::gl_str("model_mat").as_ptr())
+    };
+    debug_assert!(model_mat_loc > -1);
+    let camera_proj_mat_loc = unsafe {
+        gl::GetUniformLocation(shader, backend::gl_str("camera.proj_mat").as_ptr())
+    };
+    debug_assert!(camera_proj_mat_loc > -1);
+    let camera_view_mat_loc = unsafe {
+        gl::GetUniformLocation(shader, backend::gl_str("camera.view_mat").as_ptr())
+    };
+    debug_assert!(camera_view_mat_loc > -1);
+    unsafe {
+        gl::UseProgram(shader);
+        gl::UniformMatrix4fv(model_mat_loc, 1, gl::FALSE, uniforms.model_mat.as_ptr());
+        gl::UniformMatrix4fv(camera_proj_mat_loc, 1, gl::FALSE, uniforms.camera.proj_mat.as_ptr());
+        gl::UniformMatrix4fv(camera_proj_mat_loc, 1, gl::FALSE, uniforms.camera.view_mat.as_ptr());
+    }
 }
 
 
@@ -189,6 +217,17 @@ struct ShaderSource {
     frag_source: &'static str,
 }
 
+fn create_shader_source() -> ShaderSource {
+    let vert_source = include_str!("../shaders/mesh.vert.glsl");
+    let frag_source = include_str!("../shaders/mesh.frag.glsl");
+    
+    ShaderSource {
+        vert_name: "mesh.vert.glsl",
+        vert_source: vert_source,
+        frag_name: "mesh.frag.glsl",
+        frag_source: frag_source,
+    }
+}
             
 fn send_to_gpu_shaders(game: &mut backend::GLState, source: ShaderSource) -> GLuint {
     let mut vert_reader = io::Cursor::new(source.vert_source);
@@ -201,18 +240,6 @@ fn send_to_gpu_shaders(game: &mut backend::GLState, source: ShaderSource) -> GLu
     debug_assert!(sp > 0);
 
     sp
-}
-
-fn create_shader_source() -> ShaderSource {
-    let vert_source = include_str!("../shaders/mesh.vert.glsl");
-    let frag_source = include_str!("../shaders/mesh.frag.glsl");
-    
-    ShaderSource {
-        vert_name: "mesh.vert.glsl",
-        vert_source: vert_source,
-        frag_name: "mesh.frag.glsl",
-        frag_source: frag_source,
-    }
 }
 
 /// Initialize the logger.

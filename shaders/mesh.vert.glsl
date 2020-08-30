@@ -6,7 +6,7 @@ struct Camera {
     mat4 proj_mat;
     // The coordinate transformation for converting from
     // world space to camera space.
-    mat4 view_mat;   
+    mat4 view_mat;
 }
 
 in layout (location = 0) vec3 v_pos;
