@@ -29,6 +29,8 @@ use log::{info};
 use mini_obj::ObjMesh;
 use tex_atlas::TextureAtlas2D;
 use std::io;
+use std::mem;
+use std::ptr;
 
 
 // OpenGL extension constants.
@@ -100,6 +102,85 @@ fn send_to_gpu_texture(atlas: &TextureAtlas2D, wrapping_mode: GLuint) -> Result<
     Ok(tex)
 }
 
+fn send_to_gpu_mesh(shader: GLuint, mesh: &ObjMesh) -> (GLuint, GLuint, GLuint, GLuint) {
+    let v_pos_loc = unsafe {
+        gl::GetAttribLocation(shader, backend::gl_str("v_pos").as_ptr())
+    };
+    debug_assert!(v_pos_loc > -1);
+    let v_pos_loc = v_pos_loc as u32;
+
+    let v_tex_loc = unsafe {
+        gl::GetAttribLocation(shader, backend::gl_str("v_tex").as_ptr())
+    };
+    debug_assert!(v_tex_loc > -1);
+    let v_tex_loc = v_tex_loc as u32;
+
+    let v_norm_loc = unsafe {
+        gl::GetAttribLocation(shader, backend::gl_str("v_norm").as_ptr())
+    };
+    debug_assert!(v_norm_loc > -1);
+    let v_norm_loc = v_norm_loc as u32;
+
+    let mut v_pos_vbo = 0;
+    unsafe {
+        gl::GenBuffers(1, &mut v_pos_vbo);
+        gl::BindBuffer(gl::ARRAY_BUFFER, v_pos_vbo);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            (3 * mem::size_of::<GLfloat>() * mesh.points.len()) as GLsizeiptr,
+            mesh.points.as_ptr() as *const GLvoid,
+            gl::STATIC_DRAW
+        );
+    }
+    debug_assert!(v_pos_vbo > 0);
+
+    let mut v_tex_vbo = 0;
+    unsafe {
+        gl::GenBuffers(1, &mut v_tex_vbo);
+        gl::BindBuffer(gl::ARRAY_BUFFER, v_tex_vbo);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            // (2 * mem::size_of::<GLfloat>() * mesh.tex_coords.len()) as GLsizeiptr,
+            mesh.tex_coords.len_bytes() as GLsizeiptr,
+            mesh.tex_coords.as_ptr() as *const GLvoid,
+            gl::STATIC_DRAW
+        );
+    }
+    debug_assert!(v_tex_vbo > 0);
+
+    let mut v_norm_vbo = 0;
+    unsafe {
+        gl::GenBuffers(1, &mut v_norm_vbo);
+        gl::BindBuffer(gl::ARRAY_BUFFER, v_norm_vbo);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            // (3 * mem::size_of::<GLfloat>() * mesh.points.len()) as GLsizeiptr,
+            mesh.normals.len_bytes() as GLsizeiptr,
+            mesh.normals.as_ptr() as *const GLvoid,
+            gl::STATIC_DRAW
+        );
+    }
+    debug_assert!(v_norm_vbo > 0);
+
+    let mut vao = 0;
+    unsafe {
+        gl::GenVertexArrays(1, &mut vao);
+        gl::BindVertexArray(vao);
+        gl::BindBuffer(gl::ARRAY_BUFFER, v_pos_vbo);
+        gl::VertexAttribPointer(v_pos_loc, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
+        gl::BindBuffer(gl::ARRAY_BUFFER, v_tex_vbo);
+        gl::VertexAttribPointer(v_tex_loc, 2, gl::FLOAT, gl::FALSE, 0, ptr::null());
+        gl::BindBuffer(gl::ARRAY_BUFFER, v_norm_vbo);
+        gl::VertexAttribPointer(v_norm_loc, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
+        gl::EnableVertexAttribArray(v_pos_loc);
+        gl::EnableVertexAttribArray(v_tex_loc);
+        gl::EnableVertexAttribArray(v_norm_loc);
+    }
+    debug_assert!(vao > 0);
+
+    (vao, v_pos_vbo, v_tex_vbo, v_norm_vbo)
+}
+
 #[derive(Copy, Clone)]
 struct ShaderSource {
     vert_name: &'static str,
@@ -120,6 +201,18 @@ fn send_to_gpu_shaders(game: &mut backend::GLState, source: ShaderSource) -> GLu
     debug_assert!(sp > 0);
 
     sp
+}
+
+fn create_shader_source() -> ShaderSource {
+    let vert_source = include_str!("../shaders/mesh.vert.glsl");
+    let frag_source = include_str!("../shaders/mesh.frag.glsl");
+    
+    ShaderSource {
+        vert_name: "mesh.vert.glsl",
+        vert_source: vert_source,
+        frag_name: "mesh.frag.glsl",
+        frag_source: frag_source,
+    }
 }
 
 /// Initialize the logger.
@@ -144,6 +237,8 @@ fn main() {
     init_logger("arcball_demo.log");
     let mut camera = create_camera(WIDTH, HEIGHT);
     let mut context = init_gl(WIDTH, HEIGHT);
+    let shader_source = create_shader_source();
+
     while !context.window.should_close() {
         let elapsed_seconds = backend::update_timers(&mut context);
         backend::update_fps_counter(&mut context);

@@ -209,7 +209,7 @@ impl<S> Camera<S> where S: gdmath::ScalarFloat {
         self.position += gdmath::vec3(self.up)      *  delta_position.y;
         self.position += gdmath::vec3(self.right)   *  delta_position.x;
 
-        /// Update the camera matrices.
+        // Update the camera matrices.
         let trans_mat_inv = Matrix4::from_translation(self.position);
         self.rot_mat = rot_mat_inv.inverse().unwrap();
         self.trans_mat = trans_mat_inv.inverse().unwrap();

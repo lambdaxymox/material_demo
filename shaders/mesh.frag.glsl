@@ -15,6 +15,7 @@ struct Light {
     vec3 specular;
 }
 
+
 in vec3 v_position_eye;
 in vec2 v_tex_coord;
 in vec3 v_normal_eye;
