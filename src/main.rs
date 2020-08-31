@@ -51,8 +51,8 @@ const CLEAR_COLOR: [f32; 4] = [0.2_f32, 0.2_f32, 0.2_f32, 1.0_f32];
 // Default value for the depth buffer.
 const CLEAR_DEPTH: [f32; 4] = [1.0_f32, 1.0_f32, 1.0_f32, 1.0_f32];
 
-const SCREEN_WIDTH: u32 = 640;
-const SCREEN_HEIGHT: u32 = 480;
+const SCREEN_WIDTH: u32 = 800;
+const SCREEN_HEIGHT: u32 = 600;
 
 fn create_mesh() -> ObjMesh {
     let buffer = include_bytes!("../assets/teapot.obj");
@@ -376,8 +376,8 @@ fn main() {
     send_to_gpu_uniforms_material(shader, &material);
 
     unsafe {
-        //gl::Enable(gl::DEPTH_TEST);
-        //gl::DepthFunc(gl::LESS);
+        gl::Enable(gl::DEPTH_TEST);
+        gl::DepthFunc(gl::LESS);
         //gl::Enable(gl::CULL_FACE);
         //gl::FrontFace(gl::CCW);
         gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
