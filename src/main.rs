@@ -320,7 +320,6 @@ fn init_gl(width: u32, height: u32) -> backend::OpenGLContext {
 }
 
 fn main() {
-    use gdmath::One;
     /*
     let mesh = create_mesh();
     let model_mat = Matrix4::new(
