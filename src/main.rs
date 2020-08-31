@@ -94,17 +94,19 @@ struct Light {
     pub position_world: Vector3<f32>,
 }
 
-struct Uniforms {
-    model_mat: Matrix4<f32>,
-    camera: Camera<f32>,
-
-}
-
-fn send_to_gpu_uniforms(shader: GLuint, uniforms: Uniforms) {
+fn send_to_gpu_uniforms_mesh(shader: GLuint, model_mat: &Matrix4<f32>) {
     let model_mat_loc = unsafe {
         gl::GetUniformLocation(shader, backend::gl_str("model_mat").as_ptr())
     };
     debug_assert!(model_mat_loc > -1);
+    
+    unsafe {
+        gl::UseProgram(shader);
+        gl::UniformMatrix4fv(model_mat_loc, 1, gl::FALSE, model_mat.as_ptr());
+    }
+}
+
+fn send_to_gpu_uniforms_camera(shader: GLuint, camera: &Camera<f32>) {
     let camera_proj_mat_loc = unsafe {
         gl::GetUniformLocation(shader, backend::gl_str("camera.proj_mat").as_ptr())
     };
@@ -113,12 +115,65 @@ fn send_to_gpu_uniforms(shader: GLuint, uniforms: Uniforms) {
         gl::GetUniformLocation(shader, backend::gl_str("camera.view_mat").as_ptr())
     };
     debug_assert!(camera_view_mat_loc > -1);
-    
+
     unsafe {
         gl::UseProgram(shader);
-        gl::UniformMatrix4fv(model_mat_loc, 1, gl::FALSE, uniforms.model_mat.as_ptr());
-        gl::UniformMatrix4fv(camera_proj_mat_loc, 1, gl::FALSE, uniforms.camera.proj_mat.as_ptr());
-        gl::UniformMatrix4fv(camera_proj_mat_loc, 1, gl::FALSE, uniforms.camera.view_mat.as_ptr());
+        gl::UniformMatrix4fv(camera_proj_mat_loc, 1, gl::FALSE, camera.proj_mat.as_ptr());
+        gl::UniformMatrix4fv(camera_view_mat_loc, 1, gl::FALSE, camera.view_mat.as_ptr());
+    }
+}
+
+fn send_to_gpu_uniforms_light(shader: GLuint, light: &Light) {
+    let light_position_world_loc = unsafe {
+        gl::GetUniformLocation(shader, backend::gl_str("light.position_world").as_ptr())
+    };
+    debug_assert!(light_position_world_loc > -1);
+    let light_ambient_loc = unsafe {
+        gl::GetUniformLocation(shader, backend::gl_str("light.ambient").as_ptr())
+    };
+    debug_assert!(light_ambient_loc > -1);
+    let light_diffuse_loc = unsafe {
+        gl::GetUniformLocation(shader, backend::gl_str("light.diffuse").as_ptr())
+    };
+    debug_assert!(light_diffuse_loc > -1);
+    let light_specular_loc = unsafe { 
+        gl::GetUniformLocation(shader, backend::gl_str("light.specular").as_ptr())
+    };
+    debug_assert!(light_specular_loc > -1);
+
+    unsafe {
+        gl::UseProgram(shader);
+        gl::Uniform3fv(light_position_world_loc, 1, light.position_world.as_ptr());
+        gl::Uniform3fv(light_ambient_loc, 1, light.ambient.as_ptr());
+        gl::Uniform3fv(light_diffuse_loc, 1, light.diffuse.as_ptr());
+        gl::Uniform3fv(light_specular_loc, 1, light.specular.as_ptr());
+    }
+}
+
+fn send_to_gpu_uniforms_material(shader: GLuint, material: &Material) {
+    let material_ambient_loc = unsafe {
+        gl::GetUniformLocation(shader, backend::gl_str("light.position_world").as_ptr())
+    };
+    debug_assert!(material_ambient_loc > -1);
+    let material_diffuse_loc = unsafe {
+        gl::GetUniformLocation(shader, backend::gl_str("light.ambient").as_ptr())
+    };
+    debug_assert!(material_diffuse_loc > -1);
+    let material_specular_loc = unsafe {
+        gl::GetUniformLocation(shader, backend::gl_str("light.diffuse").as_ptr())
+    };
+    debug_assert!(material_specular_loc > -1);
+    let material_specular_exponent_loc = unsafe { 
+        gl::GetUniformLocation(shader, backend::gl_str("light.specular").as_ptr())
+    };
+    debug_assert!(material_specular_exponent_loc > -1);
+
+    unsafe {
+        gl::UseProgram(shader);
+        gl::Uniform3fv(material_ambient_loc, 1, material.ambient.as_ptr());
+        gl::Uniform3fv(material_diffuse_loc, 1, material.diffuse.as_ptr());
+        gl::Uniform3fv(material_specular_loc, 1, material.specular.as_ptr());
+        gl::Uniform1f(material_specular_exponent_loc, material.specular_exponent);
     }
 }
 
