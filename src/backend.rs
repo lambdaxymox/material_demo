@@ -231,7 +231,7 @@ fn __init_glfw() -> Glfw {
 }
 
 /// Initialize a new OpenGL context and start a new GLFW window. 
-pub fn start_gl(width: u32, height: u32) -> Result<OpenGLContext, String> {
+pub fn start_opengl(width: u32, height: u32) -> Result<OpenGLContext, String> {
     // Start GL context and O/S window using the GLFW helper library.
     info!("Starting GLFW");
     info!("Using GLFW version {}", glfw::get_version_string());
@@ -292,7 +292,6 @@ pub fn validate_shader_program(shader: GLuint) -> bool {
         gl::ValidateProgram(shader);
         gl::GetProgramiv(shader, gl::VALIDATE_STATUS, &mut params);
     }
-
     if params != gl::TRUE as i32 {
         error!("Program {} GL_VALIDATE_STATUS = GL_FALSE\n", shader);
         error!("{}", program_info_log(shader));

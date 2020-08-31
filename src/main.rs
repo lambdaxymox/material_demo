@@ -277,7 +277,7 @@ fn init_logger(log_file: &str) {
 
 /// Create and OpenGL context.
 fn init_gl(width: u32, height: u32) -> backend::OpenGLContext {
-    let context = match backend::start_gl(width, height) {
+    let context = match backend::start_opengl(width, height) {
         Ok(val) => val,
         Err(e) => {
             panic!("Failed to Initialize OpenGL context. Got error: {}", e);
