@@ -21,6 +21,8 @@ use log::{info, error};
 // 256 Kilobytes.
 const MAX_SHADER_LENGTH: usize = 262144;
 
+const FPS_COUNTER_REFRESH_PERIOD_SECONDS: f64 = 0.5;
+
 
 #[inline]
 pub fn glubyte_ptr_to_string(cstr: *const GLubyte) -> String {
@@ -171,7 +173,7 @@ impl OpenGLContext {
     pub fn update_fps_counter(&mut self) {     
         let current_time_seconds = self.glfw.get_time();
         let elapsed_seconds = current_time_seconds - self.framerate_time_seconds;
-        if elapsed_seconds > 0.5 {
+        if elapsed_seconds > FPS_COUNTER_REFRESH_PERIOD_SECONDS {
             self.framerate_time_seconds = current_time_seconds;
             let fps = self.frame_count as f64 / elapsed_seconds;
             self.window.set_title(&format!("Googly Blocks @ {:.2}", fps));

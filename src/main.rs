@@ -110,6 +110,7 @@ fn create_camera(width: u32, height: u32) -> Camera<f32> {
     Camera::new(spec, kinematics)
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
 struct Material {
     ambient: Vector3<f32>,
     diffuse: Vector3<f32>,
@@ -122,10 +123,11 @@ fn create_material() -> Material {
         ambient: Vector3::new(0.135, 0.2225, 0.1575),
         diffuse: Vector3::new(0.54, 0.89, 0.63),
         specular: Vector3::new(0.316228, 0.316228, 0.316228),
-        specular_exponent: 1.0
+        specular_exponent: 0.1
     }
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
 struct Light {
     pub ambient: Vector3<f32>,
     pub diffuse: Vector3<f32>,
