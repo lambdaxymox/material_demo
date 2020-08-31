@@ -6,6 +6,7 @@ use crate::gl::types::{
 use glfw;
 use glfw::{Context, Glfw};
 
+use std::error;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::io::{Read, BufReader};
@@ -449,6 +450,9 @@ impl fmt::Display for ShaderCompilationError {
         }
     }
 }
+
+impl error::Error for ShaderCompilationError {}
+
 
 /// Load the shader source file(s).
 pub fn parse_shader<P: AsRef<Path>, R: Read>(
