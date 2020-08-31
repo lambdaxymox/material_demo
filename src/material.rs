@@ -179,6 +179,8 @@ fn raw_material_table() -> HashMap<&'static str, Material<f32>> {
     materials
 }
 
+/// Create a table of materials for the Blinn-Phong shading model that can be sent to the 
+/// GPU directly.
 pub fn material_table() -> HashMap<&'static str, Material<f32>> {
     raw_material_table()
         .iter()
