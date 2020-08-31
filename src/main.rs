@@ -11,6 +11,7 @@ mod gl {
 
 mod backend;
 mod camera;
+mod light;
 mod material;
 
 use camera::{
@@ -19,6 +20,7 @@ use camera::{
     CameraAttitude,
     Camera
 };
+use light::PointLight;
 use material::Material;
 use gdmath::{
     Degrees,
@@ -111,19 +113,12 @@ fn create_camera(width: u32, height: u32) -> Camera<f32> {
     Camera::new(spec, kinematics)
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-struct PointLight {
-    pub ambient: Vector3<f32>,
-    pub diffuse: Vector3<f32>,
-    pub specular: Vector3<f32>,
-}
-
-fn create_light() -> PointLight {
-    PointLight {
-        ambient: Vector3::new(0.2, 0.2, 0.2),
-        diffuse: Vector3::new(0.5, 0.5, 0.5),
-        specular: Vector3::new(1.0, 1.0, 1.0),
-    }
+fn create_light() -> PointLight<f32> {
+    let ambient = Vector3::new(0.2, 0.2, 0.2);
+    let diffuse = Vector3::new(0.5, 0.5, 0.5);
+    let specular = Vector3::new(1.0, 1.0, 1.0);
+    
+    PointLight::new(ambient, diffuse, specular)
 }
 
 fn send_to_gpu_uniforms_mesh(shader: GLuint, model_mat: &Matrix4<f32>) {
@@ -155,7 +150,7 @@ fn send_to_gpu_uniforms_camera(shader: GLuint, camera: &Camera<f32>) {
     }
 }
 
-fn send_to_gpu_uniforms_light(shader: GLuint, light: &PointLight, position_world: Vector3<f32>) {
+fn send_to_gpu_uniforms_light(shader: GLuint, light: &PointLight<f32>, position_world: Vector3<f32>) {
     let light_position_world_loc = unsafe {
         gl::GetUniformLocation(shader, backend::gl_str("light.position_world").as_ptr())
     };
