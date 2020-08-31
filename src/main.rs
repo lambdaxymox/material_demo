@@ -51,10 +51,10 @@ const CLEAR_COLOR: [f32; 4] = [0.2_f32, 0.2_f32, 0.2_f32, 1.0_f32];
 // Default value for the depth buffer.
 const CLEAR_DEPTH: [f32; 4] = [1.0_f32, 1.0_f32, 1.0_f32, 1.0_f32];
 
-const WIDTH: u32 = 640;
-const HEIGHT: u32 = 480;
+const SCREEN_WIDTH: u32 = 640;
+const SCREEN_HEIGHT: u32 = 480;
 
-fn load_mesh() -> ObjMesh {
+fn create_mesh() -> ObjMesh {
     let buffer = include_bytes!("../assets/teapot.obj");
     let mesh = mini_obj::load_from_memory(buffer).unwrap();
 
@@ -87,12 +87,27 @@ struct Material {
     specular_exponent: f32,
 }
 
+fn create_material() -> Material {
+    Material {
+        ambient: Vector3::new(1.0, 0.5, 0.31),
+        diffuse: Vector3::new(1.0, 0.5, 0.31),
+        specular: Vector3::new(0.5, 0.5, 0.5),
+        specular_exponent: 32.0
+    }
+}
+
 struct Light {
     pub ambient: Vector3<f32>,
     pub diffuse: Vector3<f32>,
     pub specular: Vector3<f32>,
-    pub specular_exponent: f32,
-    pub position_world: Vector3<f32>,
+}
+
+fn create_light() -> Light {
+    Light {
+        ambient: Vector3::new(0.2, 0.2, 0.2),
+        diffuse: Vector3::new(0.5, 0.5, 0.5),
+        specular: Vector3::new(1.0, 1.0, 1.0),
+    }
 }
 
 fn send_to_gpu_uniforms_mesh(shader: GLuint, model_mat: &Matrix4<f32>) {
@@ -124,7 +139,7 @@ fn send_to_gpu_uniforms_camera(shader: GLuint, camera: &Camera<f32>) {
     }
 }
 
-fn send_to_gpu_uniforms_light(shader: GLuint, light: &Light) {
+fn send_to_gpu_uniforms_light(shader: GLuint, light: &Light, position_world: Vector3<f32>) {
     let light_position_world_loc = unsafe {
         gl::GetUniformLocation(shader, backend::gl_str("light.position_world").as_ptr())
     };
@@ -144,7 +159,7 @@ fn send_to_gpu_uniforms_light(shader: GLuint, light: &Light) {
 
     unsafe {
         gl::UseProgram(shader);
-        gl::Uniform3fv(light_position_world_loc, 1, light.position_world.as_ptr());
+        gl::Uniform3fv(light_position_world_loc, 1, position_world.as_ptr());
         gl::Uniform3fv(light_ambient_loc, 1, light.ambient.as_ptr());
         gl::Uniform3fv(light_diffuse_loc, 1, light.diffuse.as_ptr());
         gl::Uniform3fv(light_specular_loc, 1, light.specular.as_ptr());
@@ -153,19 +168,19 @@ fn send_to_gpu_uniforms_light(shader: GLuint, light: &Light) {
 
 fn send_to_gpu_uniforms_material(shader: GLuint, material: &Material) {
     let material_ambient_loc = unsafe {
-        gl::GetUniformLocation(shader, backend::gl_str("light.position_world").as_ptr())
+        gl::GetUniformLocation(shader, backend::gl_str("material.ambient").as_ptr())
     };
     debug_assert!(material_ambient_loc > -1);
     let material_diffuse_loc = unsafe {
-        gl::GetUniformLocation(shader, backend::gl_str("light.ambient").as_ptr())
+        gl::GetUniformLocation(shader, backend::gl_str("material.diffuse").as_ptr())
     };
     debug_assert!(material_diffuse_loc > -1);
     let material_specular_loc = unsafe {
-        gl::GetUniformLocation(shader, backend::gl_str("light.diffuse").as_ptr())
+        gl::GetUniformLocation(shader, backend::gl_str("material.specular").as_ptr())
     };
     debug_assert!(material_specular_loc > -1);
     let material_specular_exponent_loc = unsafe { 
-        gl::GetUniformLocation(shader, backend::gl_str("light.specular").as_ptr())
+        gl::GetUniformLocation(shader, backend::gl_str("material.specular_exponent").as_ptr())
     };
     debug_assert!(material_specular_exponent_loc > -1);
 
@@ -335,11 +350,19 @@ fn init_gl(width: u32, height: u32) -> backend::OpenGLContext {
 }
 
 fn main() {
-    let mesh = load_mesh();
-    let model_mat = Matrix4::one();
-    init_logger("arcball_demo.log");
-    let mut camera = create_camera(WIDTH, HEIGHT);
-    let mut context = init_gl(WIDTH, HEIGHT);
+    let mesh = create_mesh();
+    let model_mat = Matrix4::new(
+        1.0 / 50.0, 0.0,        0.0,        0.0, 
+        0.0,        1.0 / 50.0, 0.0,        0.0, 
+        0.0,        0.0,        1.0 / 50.0, 0.0, 
+        0.0,        0.0,        0.0,        1.0 / 50.0
+    );
+    init_logger("opengl_demo.log");
+    let mut camera = create_camera(SCREEN_WIDTH, SCREEN_HEIGHT);
+    let light = create_light();
+    let light_position_world: Vector3<f32> = Vector3::new(1.2, 1.0, 2.0);
+    let material = create_material();
+    let mut context = init_gl(SCREEN_WIDTH, SCREEN_HEIGHT);
     let shader_source = create_shader_source();
     let shader = send_to_gpu_shaders(&mut context, shader_source);
     let (
@@ -349,17 +372,17 @@ fn main() {
         v_norm_vbo) = send_to_gpu_mesh(shader, &mesh);
     send_to_gpu_uniforms_mesh(shader, &model_mat);
     send_to_gpu_uniforms_camera(shader, &camera);
-    //send_to_gpu_uniforms_light(shader, &light);
-    //send_to_gpu_uniforms_material(shader, &material);
+    send_to_gpu_uniforms_light(shader, &light, light_position_world);
+    send_to_gpu_uniforms_material(shader, &material);
 
     unsafe {
-        gl::Enable(gl::DEPTH_TEST);
-        gl::DepthFunc(gl::LESS);
-        gl::Enable(gl::CULL_FACE);
-        gl::FrontFace(gl::CCW);
+        //gl::Enable(gl::DEPTH_TEST);
+        //gl::DepthFunc(gl::LESS);
+        //gl::Enable(gl::CULL_FACE);
+        //gl::FrontFace(gl::CCW);
         gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
         gl::ClearBufferfv(gl::DEPTH, 0, &CLEAR_DEPTH[0] as *const GLfloat);
-        gl::Viewport(0, 0, WIDTH as GLint, HEIGHT as GLint);
+        gl::Viewport(0, 0, SCREEN_WIDTH as GLint, SCREEN_HEIGHT as GLint);
     }
 
     while !context.window.should_close() {
@@ -475,7 +498,7 @@ fn main() {
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
             gl::ClearBufferfv(gl::DEPTH, 0, &CLEAR_DEPTH[0] as *const GLfloat);
-            gl::Viewport(0, 0, WIDTH as GLint, HEIGHT as GLint);
+            gl::Viewport(0, 0, SCREEN_WIDTH as GLint, SCREEN_HEIGHT as GLint);
             gl::UseProgram(shader);
             gl::BindVertexArray(vao);
             gl::DrawArrays(gl::TRIANGLES, 0, mesh.len() as i32);

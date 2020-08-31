@@ -241,7 +241,7 @@ pub fn start_opengl(width: u32, height: u32) -> Result<OpenGLContext, String> {
 
     info!("Started GLFW successfully");
     let maybe_glfw_window = glfw.create_window(
-        width, height, &format!("ARCBALL DEMO"), glfw::WindowMode::Windowed
+        width, height, &format!("OPENGL DEMO"), glfw::WindowMode::Windowed
     );
     let (mut window, events) = match maybe_glfw_window {
         Some(tuple) => tuple,
