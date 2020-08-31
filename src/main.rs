@@ -43,7 +43,7 @@ use std::ptr;
 
 
 // Default value for the color buffer.
-const CLEAR_COLOR: [f32; 4] = [0.2_f32, 0.2_f32, 0.2_f32, 1.0_f32];
+const CLEAR_COLOR: [f32; 4] = [0.1_f32, 0.1_f32, 0.1_f32, 1.0_f32];
 // Default value for the depth buffer.
 const CLEAR_DEPTH: [f32; 4] = [1.0_f32, 1.0_f32, 1.0_f32, 1.0_f32];
 
@@ -57,6 +57,40 @@ fn create_mesh() -> ObjMesh {
     mesh
 }
 
+fn create_box_mesh() -> ObjMesh {
+    let points: Vec<[f32; 3]> = vec![
+        [-0.5, -0.5, -0.5], [ 0.5, -0.5, -0.5], [ 0.5,  0.5, -0.5],
+        [ 0.5,  0.5, -0.5], [-0.5,  0.5, -0.5], [-0.5, -0.5, -0.5],
+        [-0.5, -0.5,  0.5], [ 0.5, -0.5,  0.5], [ 0.5,  0.5,  0.5],  
+        [ 0.5,  0.5,  0.5], [-0.5,  0.5,  0.5], [-0.5, -0.5,  0.5],
+        [-0.5,  0.5,  0.5], [-0.5,  0.5, -0.5], [-0.5, -0.5, -0.5], 
+        [-0.5, -0.5, -0.5], [-0.5, -0.5,  0.5], [-0.5,  0.5,  0.5], 
+        [ 0.5,  0.5,  0.5], [ 0.5,  0.5, -0.5], [ 0.5, -0.5, -0.5], 
+        [ 0.5, -0.5, -0.5], [ 0.5, -0.5,  0.5], [ 0.5,  0.5,  0.5],
+        [-0.5, -0.5, -0.5], [ 0.5, -0.5, -0.5], [ 0.5, -0.5,  0.5],  
+        [ 0.5, -0.5,  0.5], [-0.5, -0.5,  0.5], [-0.5, -0.5, -0.5],
+        [-0.5,  0.5, -0.5], [ 0.5,  0.5, -0.5], [ 0.5,  0.5,  0.5], 
+        [ 0.5,  0.5,  0.5], [-0.5,  0.5,  0.5], [-0.5,  0.5, -0.5],  
+    ];
+    let tex_coords = vec![];
+    let normals = vec![
+        [ 0.0,  0.0, -1.0], [ 0.0,  0.0, -1.0], [ 0.0,  0.0, -1.0],
+        [ 0.0,  0.0, -1.0], [ 0.0,  0.0, -1.0], [ 0.0,  0.0, -1.0],
+        [ 0.0,  0.0,  1.0], [ 0.0,  0.0,  1.0], [ 0.0,  0.0,  1.0],
+        [ 0.0,  0.0,  1.0], [ 0.0,  0.0,  1.0], [ 0.0,  0.0,  1.0],
+        [-1.0,  0.0,  0.0], [-1.0,  0.0,  0.0], [-1.0,  0.0,  0.0],
+        [-1.0,  0.0,  0.0], [-1.0,  0.0,  0.0], [-1.0,  0.0,  0.0],
+        [ 1.0,  0.0,  0.0], [ 1.0,  0.0,  0.0], [ 1.0,  0.0,  0.0],
+        [ 1.0,  0.0,  0.0], [ 1.0,  0.0,  0.0], [ 1.0,  0.0,  0.0],
+        [ 0.0, -1.0,  0.0], [ 0.0, -1.0,  0.0], [ 0.0, -1.0,  0.0],
+        [ 0.0, -1.0,  0.0], [ 0.0, -1.0,  0.0], [ 0.0, -1.0,  0.0],
+        [ 0.0,  1.0,  0.0], [ 0.0,  1.0,  0.0], [ 0.0,  1.0,  0.0],
+        [ 0.0,  1.0,  0.0], [ 0.0,  1.0,  0.0], [ 0.0,  1.0,  0.0],
+    ];
+
+    ObjMesh::new(points, tex_coords, normals)
+}
+
 fn create_camera(width: u32, height: u32) -> Camera<f32> {
     let near = 0.1;
     let far = 100.0;
@@ -66,11 +100,11 @@ fn create_camera(width: u32, height: u32) -> Camera<f32> {
 
     let speed = 5.0;
     let yaw_speed = 50.0;
-    let position = gdmath::vec3((0.0, 10.0, 0.0));
+    let position = gdmath::vec3((0.0, 0.0, 3.0));
     let forward = gdmath::vec4((0.0, 0.0, 1.0, 0.0));
     let right = gdmath::vec4((1.0, 0.0, 0.0, 0.0));
     let up  = gdmath::vec4((0.0, 1.0, 0.0, 0.0));
-    let axis = Quaternion::new(0.0, 0.0, -1.0, 0.0);
+    let axis = Quaternion::new(0.0, 0.0, 0.0, -1.0);
     let kinematics = CameraKinematics::new(speed, yaw_speed, position, forward, right, up, axis);
 
     Camera::new(spec, kinematics)
@@ -88,7 +122,7 @@ fn create_material() -> Material {
         ambient: Vector3::new(0.135, 0.2225, 0.1575),
         diffuse: Vector3::new(0.54, 0.89, 0.63),
         specular: Vector3::new(0.316228, 0.316228, 0.316228),
-        specular_exponent: 0.1
+        specular_exponent: 1.0
     }
 }
 
@@ -300,6 +334,8 @@ fn init_gl(width: u32, height: u32) -> backend::OpenGLContext {
 }
 
 fn main() {
+    use gdmath::One;
+    /*
     let mesh = create_mesh();
     let model_mat = Matrix4::new(
         1.0 / 500.0, 0.0,        0.0,        0.0, 
@@ -307,6 +343,9 @@ fn main() {
         0.0,        0.0,        1.0 / 500.0, 0.0, 
         0.0,        0.0,        0.0,        1.0 / 500.0
     );
+    */
+    let mesh = create_box_mesh();
+    let model_mat = Matrix4::one();
     init_logger("opengl_demo.log");
     let mut camera = create_camera(SCREEN_WIDTH, SCREEN_HEIGHT);
     let light = create_light();
@@ -327,8 +366,6 @@ fn main() {
     unsafe {
         gl::Enable(gl::DEPTH_TEST);
         gl::DepthFunc(gl::LESS);
-        gl::Enable(gl::CULL_FACE);
-        gl::FrontFace(gl::CCW);
         gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
         gl::ClearBufferfv(gl::DEPTH, 0, &CLEAR_DEPTH[0] as *const GLfloat);
         gl::Viewport(0, 0, SCREEN_WIDTH as GLint, SCREEN_HEIGHT as GLint);
@@ -379,14 +416,14 @@ fn main() {
         }
         match context.window.get_key(Key::W) {
             Action::Press | Action::Repeat => {
-                move_to.z -= camera.speed * (elapsed_seconds as GLfloat);
+                move_to.z += camera.speed * (elapsed_seconds as GLfloat);
                 cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::S) {
             Action::Press | Action::Repeat => {
-                move_to.z += camera.speed * (elapsed_seconds as GLfloat);
+                move_to.z -= camera.speed * (elapsed_seconds as GLfloat);
                 cam_moved = true;
             }
             _ => {}
