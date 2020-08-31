@@ -179,6 +179,30 @@ impl<S> Camera<S> where S: gdmath::ScalarFloat {
         Vector3::new(self.forward.x, self.forward.y, self.forward.z)
     }
 
+    /// Get the camera's up direction in camera space.
+    #[inline]
+    pub fn up_axis_eye(&self) -> Vector3<S> {
+        let zero = S::zero();
+        let one = S::one();
+        Vector3::new(zero, one, zero)
+    }
+    
+    /// Get the camera's right axis in camera space.
+    #[inline]
+    pub fn right_axis_eye(&self) -> Vector3<S> {
+        let zero = S::zero();
+        let one = S::one();
+        Vector3::new(one, zero ,zero)
+    }
+    
+    /// Get the camera's forward axis in camera space.
+    #[inline]
+    pub fn forward_axis_eye(&self) -> Vector3<S> {
+        let zero = S::zero();
+        let one = S::one();
+        Vector3::new(zero, zero, -one)
+    }
+
     /// Update the camera position in world space.
     #[inline]
     pub fn update(&mut self, delta_position: Vector3<S>, delta_attitude: CameraAttitude<S>) {
@@ -198,11 +222,10 @@ impl<S> Camera<S> where S: gdmath::ScalarFloat {
 
         // Update the camera axes so we can rotate the camera about the new rotation axes.
         let zero = S::zero();
-        let one = S::one();
         let rot_mat_inv = Matrix4::from(self.axis);
-        self.forward = rot_mat_inv * gdmath::vec4((zero, zero, -one, zero));
-        self.right   = rot_mat_inv * gdmath::vec4((one, zero, zero, zero));
-        self.up      = rot_mat_inv * gdmath::vec4((zero, one, zero, zero));
+        self.forward = rot_mat_inv * gdmath::vec4((self.forward_axis_eye(), zero));
+        self.right   = rot_mat_inv * gdmath::vec4((self.right_axis_eye(), zero));
+        self.up      = rot_mat_inv * gdmath::vec4((self.up_axis_eye(), zero));
 
         // Update the camera position.
         self.position += gdmath::vec3(self.forward) * -delta_position.z;
