@@ -1,6 +1,6 @@
 #version 330 core
 
-/// Material properties for the Blinn-Phong shader model.
+// Material properties for the Blinn-Phong shader model.
 struct Material {
     vec3 ambient,
     vec3 diffuse,
@@ -10,8 +10,8 @@ struct Material {
 
 // A point light with specular, diffuse, and ambient components. Each component is 
 // specified in units of 'intensity' which is an unspecified unit of the light's radiant
-// exitance. Here the three vectors approximate the spectral dependence of light 'intensity'
-// in terms of R, G, and B channels.
+// exitance on the interval [0, 1]. The three vectors approximate the spectral dependence
+// of light 'intensity' in terms of R, G, and B channels.
 struct Light {
     // The position of the light in world space.
     vec3 position_world;

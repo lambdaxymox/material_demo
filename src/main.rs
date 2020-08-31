@@ -24,12 +24,18 @@ use gdmath::{
     Quaternion,
     Matrix4,
     Storage,
+    Vector3,
 };
 use glfw::{Action, Context, Key};
-use gl::types::{GLfloat, GLint, GLuint, GLvoid, GLsizeiptr};
+use gl::types::{
+    GLfloat,
+    GLint,
+    GLuint, 
+    GLvoid, 
+    GLsizeiptr
+};
 use log::{info};
 use mini_obj::ObjMesh;
-use tex_atlas::TextureAtlas2D;
 use std::io;
 use std::mem;
 use std::ptr;
@@ -73,9 +79,25 @@ fn create_camera(width: u32, height: u32) -> Camera<f32> {
     Camera::new(spec, kinematics)
 }
 
+struct Material {
+    ambient: Vector3<f32>,
+    diffuse: Vector3<f32>,
+    specular: Vector3<f32>,
+    specular_exponent: f32,
+}
+
+struct Light {
+    pub ambient: Vector3<f32>,
+    pub diffuse: Vector3<f32>,
+    pub specular: Vector3<f32>,
+    pub specular_exponent: f32,
+    pub position_world: Vector3<f32>,
+}
+
 struct Uniforms {
     model_mat: Matrix4<f32>,
     camera: Camera<f32>,
+
 }
 
 fn send_to_gpu_uniforms(shader: GLuint, uniforms: Uniforms) {
@@ -91,6 +113,7 @@ fn send_to_gpu_uniforms(shader: GLuint, uniforms: Uniforms) {
         gl::GetUniformLocation(shader, backend::gl_str("camera.view_mat").as_ptr())
     };
     debug_assert!(camera_view_mat_loc > -1);
+    
     unsafe {
         gl::UseProgram(shader);
         gl::UniformMatrix4fv(model_mat_loc, 1, gl::FALSE, uniforms.model_mat.as_ptr());
@@ -99,7 +122,7 @@ fn send_to_gpu_uniforms(shader: GLuint, uniforms: Uniforms) {
     }
 }
 
-
+/*
 /// Load texture image into the GPU.
 fn send_to_gpu_texture(atlas: &TextureAtlas2D, wrapping_mode: GLuint) -> Result<GLuint, String> {
     let mut tex = 0;
@@ -129,7 +152,7 @@ fn send_to_gpu_texture(atlas: &TextureAtlas2D, wrapping_mode: GLuint) -> Result<
 
     Ok(tex)
 }
-
+*/
 fn send_to_gpu_mesh(shader: GLuint, mesh: &ObjMesh) -> (GLuint, GLuint, GLuint, GLuint) {
     let v_pos_loc = unsafe {
         gl::GetAttribLocation(shader, backend::gl_str("v_pos").as_ptr())
@@ -229,17 +252,22 @@ fn create_shader_source() -> ShaderSource {
     }
 }
             
-fn send_to_gpu_shaders(game: &mut backend::GLState, source: ShaderSource) -> GLuint {
+fn send_to_gpu_shaders(context: &mut backend::GLState, source: ShaderSource) -> GLuint {
     let mut vert_reader = io::Cursor::new(source.vert_source);
     let mut frag_reader = io::Cursor::new(source.frag_source);
-    let sp = backend::create_program_from_reader(
-        game,
+    let result = backend::compile_from_reader(
         &mut vert_reader, source.vert_name,
         &mut frag_reader, source.frag_name
-    ).unwrap();
-    debug_assert!(sp > 0);
+    );
+    let shader = match result {
+        Ok(value) => value,
+        Err(e) => {
+            panic!("Could not compile shaders. Got error: {}", e);
+        }
+    };
+    debug_assert!(shader > 0);
 
-    sp
+    shader
 }
 
 /// Initialize the logger.
@@ -265,6 +293,12 @@ fn main() {
     let mut camera = create_camera(WIDTH, HEIGHT);
     let mut context = init_gl(WIDTH, HEIGHT);
     let shader_source = create_shader_source();
+    let shader = send_to_gpu_shaders(&mut context, shader_source);
+    let (
+        vao, 
+        v_pos_vbo, 
+        v_tex_vbo, 
+        v_norm_vbo) = send_to_gpu_mesh(shader, &mesh);
 
     while !context.window.should_close() {
         let elapsed_seconds = backend::update_timers(&mut context);
