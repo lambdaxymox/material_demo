@@ -327,6 +327,7 @@ fn main() {
     let mesh = create_box_mesh();
     let model_mat = Matrix4::one();
     init_logger("opengl_demo.log");
+    info!("BEGIN LOG");
     let mut camera = create_camera(SCREEN_WIDTH, SCREEN_HEIGHT);
     let light = create_light();
     let light_position_world: Vector3<f32> = Vector3::new(1.2, 1.0, 2.0);
