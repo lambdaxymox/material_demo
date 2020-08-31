@@ -66,11 +66,11 @@ fn create_camera(width: u32, height: u32) -> Camera<f32> {
 
     let speed = 5.0;
     let yaw_speed = 50.0;
-    let position = gdmath::vec3((0.0, 0.0, 10.0));
+    let position = gdmath::vec3((0.0, 10.0, 0.0));
     let forward = gdmath::vec4((0.0, 0.0, 1.0, 0.0));
     let right = gdmath::vec4((1.0, 0.0, 0.0, 0.0));
     let up  = gdmath::vec4((0.0, 1.0, 0.0, 0.0));
-    let axis = Quaternion::new(0.0, 0.0, 0.0, -1.0);
+    let axis = Quaternion::new(0.0, 0.0, -1.0, 0.0);
     let kinematics = CameraKinematics::new(speed, yaw_speed, position, forward, right, up, axis);
 
     Camera::new(spec, kinematics)
@@ -85,10 +85,10 @@ struct Material {
 
 fn create_material() -> Material {
     Material {
-        ambient: Vector3::new(1.0, 0.5, 0.31),
-        diffuse: Vector3::new(1.0, 0.5, 0.31),
-        specular: Vector3::new(0.5, 0.5, 0.5),
-        specular_exponent: 32.0
+        ambient: Vector3::new(0.135, 0.2225, 0.1575),
+        diffuse: Vector3::new(0.54, 0.89, 0.63),
+        specular: Vector3::new(0.316228, 0.316228, 0.316228),
+        specular_exponent: 0.1
     }
 }
 
@@ -189,7 +189,7 @@ fn send_to_gpu_uniforms_material(shader: GLuint, material: &Material) {
     }
 }
 
-fn send_to_gpu_mesh(shader: GLuint, mesh: &ObjMesh) -> (GLuint, GLuint, GLuint, GLuint) {
+fn send_to_gpu_mesh(shader: GLuint, mesh: &ObjMesh) -> (GLuint, GLuint, GLuint) {
     let v_pos_loc = unsafe {
         gl::GetAttribLocation(shader, backend::gl_str("v_pos").as_ptr())
     };
@@ -215,27 +215,12 @@ fn send_to_gpu_mesh(shader: GLuint, mesh: &ObjMesh) -> (GLuint, GLuint, GLuint, 
     }
     debug_assert!(v_pos_vbo > 0);
 
-    let mut v_tex_vbo = 0;
-    unsafe {
-        gl::GenBuffers(1, &mut v_tex_vbo);
-        gl::BindBuffer(gl::ARRAY_BUFFER, v_tex_vbo);
-        gl::BufferData(
-            gl::ARRAY_BUFFER,
-            // (2 * mem::size_of::<GLfloat>() * mesh.tex_coords.len()) as GLsizeiptr,
-            mesh.tex_coords.len_bytes() as GLsizeiptr,
-            mesh.tex_coords.as_ptr() as *const GLvoid,
-            gl::STATIC_DRAW
-        );
-    }
-    debug_assert!(v_tex_vbo > 0);
-
     let mut v_norm_vbo = 0;
     unsafe {
         gl::GenBuffers(1, &mut v_norm_vbo);
         gl::BindBuffer(gl::ARRAY_BUFFER, v_norm_vbo);
         gl::BufferData(
             gl::ARRAY_BUFFER,
-            // (3 * mem::size_of::<GLfloat>() * mesh.points.len()) as GLsizeiptr,
             mesh.normals.len_bytes() as GLsizeiptr,
             mesh.normals.as_ptr() as *const GLvoid,
             gl::STATIC_DRAW
@@ -256,7 +241,7 @@ fn send_to_gpu_mesh(shader: GLuint, mesh: &ObjMesh) -> (GLuint, GLuint, GLuint, 
     }
     debug_assert!(vao > 0);
 
-    (vao, v_pos_vbo, v_tex_vbo, v_norm_vbo)
+    (vao, v_pos_vbo, v_norm_vbo)
 }
 
 #[derive(Copy, Clone)]
@@ -317,10 +302,10 @@ fn init_gl(width: u32, height: u32) -> backend::OpenGLContext {
 fn main() {
     let mesh = create_mesh();
     let model_mat = Matrix4::new(
-        1.0 / 50.0, 0.0,        0.0,        0.0, 
-        0.0,        1.0 / 50.0, 0.0,        0.0, 
-        0.0,        0.0,        1.0 / 50.0, 0.0, 
-        0.0,        0.0,        0.0,        1.0 / 50.0
+        1.0 / 500.0, 0.0,        0.0,        0.0, 
+        0.0,        1.0 / 500.0, 0.0,        0.0, 
+        0.0,        0.0,        1.0 / 500.0, 0.0, 
+        0.0,        0.0,        0.0,        1.0 / 500.0
     );
     init_logger("opengl_demo.log");
     let mut camera = create_camera(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -333,7 +318,6 @@ fn main() {
     let (
         vao, 
         v_pos_vbo, 
-        v_tex_vbo, 
         v_norm_vbo) = send_to_gpu_mesh(shader, &mesh);
     send_to_gpu_uniforms_mesh(shader, &model_mat);
     send_to_gpu_uniforms_camera(shader, &camera);
@@ -343,8 +327,8 @@ fn main() {
     unsafe {
         gl::Enable(gl::DEPTH_TEST);
         gl::DepthFunc(gl::LESS);
-        //gl::Enable(gl::CULL_FACE);
-        //gl::FrontFace(gl::CCW);
+        gl::Enable(gl::CULL_FACE);
+        gl::FrontFace(gl::CCW);
         gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
         gl::ClearBufferfv(gl::DEPTH, 0, &CLEAR_DEPTH[0] as *const GLfloat);
         gl::Viewport(0, 0, SCREEN_WIDTH as GLint, SCREEN_HEIGHT as GLint);
@@ -458,6 +442,7 @@ fn main() {
 
         if cam_moved {
             camera.update(move_to, cam_attitude);
+            send_to_gpu_uniforms_camera(shader, &camera);
         }
 
         unsafe {
