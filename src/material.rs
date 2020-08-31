@@ -1,19 +1,20 @@
 use gdmath::{
-    Vector3
+    Vector3,
+    ScalarFloat,
 };
 use std::collections::hash_map::HashMap;
 
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub struct Material {
-    pub ambient: Vector3<f32>,
-    pub diffuse: Vector3<f32>,
-    pub specular: Vector3<f32>,
-    pub specular_exponent: f32,
+pub struct Material<S> {
+    pub ambient: Vector3<S>,
+    pub diffuse: Vector3<S>,
+    pub specular: Vector3<S>,
+    pub specular_exponent: S,
 }
 
-impl Material {
-    fn new(ambient: Vector3<f32>, diffuse: Vector3<f32>, specular: Vector3<f32>, specular_exponent: f32) -> Material {
+impl<S> Material<S> where S: ScalarFloat {
+    fn new(ambient: Vector3<S>, diffuse: Vector3<S>, specular: Vector3<S>, specular_exponent: S) -> Material<S> {
         Material {
             ambient: ambient,
             diffuse: diffuse,
@@ -23,11 +24,11 @@ impl Material {
     }
 }
 
-/// Create a table of materials for the Blinn-Phong shading model.
+/// A table of materials for the Blinn-Phong shading model.
 /// There material parameters are derived from the OpenGL `teapots.c` demo, 
 /// c.f. `Silicon Graphics, Inc., 1994, Mark J. Kilgard` and the table found
 /// (here)[http://devernay.free.fr/cours/opengl/materials.html]
-pub fn material_table() -> HashMap<&'static str, Material> {
+fn raw_material_table() -> HashMap<&'static str, Material<f32>> {
     let materials = [
         ("emerald", Material::new(
             Vector3::new(0.0215, 0.1745, 0.0215),
@@ -176,4 +177,16 @@ pub fn material_table() -> HashMap<&'static str, Material> {
     ].iter().map(|p| *p).collect();
     
     materials
+}
+
+pub fn material_table() -> HashMap<&'static str, Material<f32>> {
+    raw_material_table()
+        .iter()
+        .map(|(name, material)| { (*name, Material::new(
+            material.ambient, 
+            material.diffuse, 
+            material.specular, 
+            128.0 * material.specular_exponent
+        ))})
+        .collect::<HashMap<&'static str, Material<f32>>>()
 }

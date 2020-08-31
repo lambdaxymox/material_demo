@@ -19,6 +19,7 @@ use camera::{
     CameraAttitude,
     Camera
 };
+use material::Material;
 use gdmath::{
     Degrees,
     Quaternion,
@@ -181,7 +182,7 @@ fn send_to_gpu_uniforms_light(shader: GLuint, light: &Light, position_world: Vec
     }
 }
 
-fn send_to_gpu_uniforms_material(shader: GLuint, material: &material::Material) {
+fn send_to_gpu_uniforms_material(shader: GLuint, material: &Material<f32>) {
     let material_ambient_loc = unsafe {
         gl::GetUniformLocation(shader, backend::gl_str("material.ambient").as_ptr())
     };
