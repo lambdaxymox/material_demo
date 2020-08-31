@@ -112,14 +112,14 @@ fn create_camera(width: u32, height: u32) -> Camera<f32> {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-struct Light {
+struct PointLight {
     pub ambient: Vector3<f32>,
     pub diffuse: Vector3<f32>,
     pub specular: Vector3<f32>,
 }
 
-fn create_light() -> Light {
-    Light {
+fn create_light() -> PointLight {
+    PointLight {
         ambient: Vector3::new(0.2, 0.2, 0.2),
         diffuse: Vector3::new(0.5, 0.5, 0.5),
         specular: Vector3::new(1.0, 1.0, 1.0),
@@ -155,7 +155,7 @@ fn send_to_gpu_uniforms_camera(shader: GLuint, camera: &Camera<f32>) {
     }
 }
 
-fn send_to_gpu_uniforms_light(shader: GLuint, light: &Light, position_world: Vector3<f32>) {
+fn send_to_gpu_uniforms_light(shader: GLuint, light: &PointLight, position_world: Vector3<f32>) {
     let light_position_world_loc = unsafe {
         gl::GetUniformLocation(shader, backend::gl_str("light.position_world").as_ptr())
     };
