@@ -25,6 +25,7 @@ use gdmath::{
     Matrix4,
     Storage,
     Vector3,
+    One,
 };
 use glfw::{Action, Context, Key};
 use gl::types::{
@@ -335,6 +336,7 @@ fn init_gl(width: u32, height: u32) -> backend::OpenGLContext {
 
 fn main() {
     let mesh = load_mesh();
+    let model_mat = Matrix4::one();
     init_logger("arcball_demo.log");
     let mut camera = create_camera(WIDTH, HEIGHT);
     let mut context = init_gl(WIDTH, HEIGHT);
@@ -345,6 +347,20 @@ fn main() {
         v_pos_vbo, 
         v_tex_vbo, 
         v_norm_vbo) = send_to_gpu_mesh(shader, &mesh);
+    send_to_gpu_uniforms_mesh(shader, &model_mat);
+    send_to_gpu_uniforms_camera(shader, &camera);
+    //send_to_gpu_uniforms_light(shader, &light);
+    //send_to_gpu_uniforms_material(shader, &material);
+
+    unsafe {
+        gl::Enable(gl::DEPTH_TEST);
+        gl::DepthFunc(gl::LESS);
+        gl::Enable(gl::CULL_FACE);
+        gl::FrontFace(gl::CCW);
+        gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
+        gl::ClearBufferfv(gl::DEPTH, 0, &CLEAR_DEPTH[0] as *const GLfloat);
+        gl::Viewport(0, 0, WIDTH as GLint, HEIGHT as GLint);
+    }
 
     while !context.window.should_close() {
         let elapsed_seconds = context.update_timers();
@@ -460,6 +476,9 @@ fn main() {
             gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
             gl::ClearBufferfv(gl::DEPTH, 0, &CLEAR_DEPTH[0] as *const GLfloat);
             gl::Viewport(0, 0, WIDTH as GLint, HEIGHT as GLint);
+            gl::UseProgram(shader);
+            gl::BindVertexArray(vao);
+            gl::DrawArrays(gl::TRIANGLES, 0, mesh.len() as i32);
         }
 
         context.window.swap_buffers();
