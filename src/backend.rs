@@ -142,7 +142,7 @@ fn type_size(gl_type: GLenum) -> usize {
 
 /// A record for storing all the OpenGL state needed on the application side
 /// of the graphics application in order to manage OpenGL and GLFW.
-pub struct GLState {
+pub struct OpenGLContext {
     pub glfw: glfw::Glfw,
     pub window: glfw::Window,
     pub events: Receiver<(f64, glfw::WindowEvent)>,
@@ -152,6 +152,34 @@ pub struct GLState {
     pub running_time_seconds: f64,
     pub framerate_time_seconds: f64,
     pub frame_count: u32,
+}
+
+impl OpenGLContext {
+    /// Updates the timers in a GL context. It returns the elapsed time since the last call to
+    /// `update_timers`.
+    #[inline]
+    pub fn update_timers(&mut self) -> f64 {
+        let current_seconds = self.glfw.get_time();
+        let elapsed_seconds = current_seconds - self.running_time_seconds;
+        self.running_time_seconds = current_seconds;
+
+        elapsed_seconds
+    }
+
+    /// Update the framerate and display in the window titlebar.
+    #[inline]
+    pub fn update_fps_counter(&mut self) {     
+        let current_time_seconds = self.glfw.get_time();
+        let elapsed_seconds = current_time_seconds - self.framerate_time_seconds;
+        if elapsed_seconds > 0.5 {
+            self.framerate_time_seconds = current_time_seconds;
+            let fps = self.frame_count as f64 / elapsed_seconds;
+            self.window.set_title(&format!("Googly Blocks @ {:.2}", fps));
+            self.frame_count = 0;
+        }
+
+        self.frame_count += 1;
+    }
 }
 
 #[cfg(target_os = "macos")]
@@ -203,7 +231,7 @@ fn __init_glfw() -> Glfw {
 }
 
 /// Initialize a new OpenGL context and start a new GLFW window. 
-pub fn start_gl(width: u32, height: u32) -> Result<GLState, String> {
+pub fn start_gl(width: u32, height: u32) -> Result<OpenGLContext, String> {
     // Start GL context and O/S window using the GLFW helper library.
     info!("Starting GLFW");
     info!("Using GLFW version {}", glfw::get_version_string());
@@ -241,7 +269,7 @@ pub fn start_gl(width: u32, height: u32) -> Result<GLState, String> {
     info!("OpenGL version supported: {}", version);
     info!("{}", gl_params());
 
-    Ok(GLState {
+    Ok(OpenGLContext {
         glfw: glfw, 
         window: window, 
         events: events,
@@ -252,32 +280,6 @@ pub fn start_gl(width: u32, height: u32) -> Result<GLState, String> {
         framerate_time_seconds: 0.0,
         frame_count: 0,
     })
-}
-
-/// Updates the timers in a GL context. It returns the elapsed time since the last call to
-/// `update_timers`.
-#[inline]
-pub fn update_timers(context: &mut GLState) -> f64 {
-    let current_seconds = context.glfw.get_time();
-    let elapsed_seconds = current_seconds - context.running_time_seconds;
-    context.running_time_seconds = current_seconds;
-
-    elapsed_seconds
-}
-
-/// Update the framerate and display in the window titlebar.
-#[inline]
-pub fn update_fps_counter(context: &mut GLState) {     
-    let current_time_seconds = context.glfw.get_time();
-    let elapsed_seconds = current_time_seconds - context.framerate_time_seconds;
-    if elapsed_seconds > 0.5 {
-        context.framerate_time_seconds = current_time_seconds;
-        let fps = context.frame_count as f64 / elapsed_seconds;
-        context.window.set_title(&format!("Googly Blocks @ {:.2}", fps));
-        context.frame_count = 0;
-    }
-
-    context.frame_count += 1;
 }
 
 
@@ -560,7 +562,7 @@ pub fn compile_program(
 
 /// Compile and link a shader program directly from the files.
 pub fn compile_from_files<P: AsRef<Path>, Q: AsRef<Path>>(
-    context: &GLState,
+    context: &OpenGLContext,
     vert_file_name: P, frag_file_name: Q) -> Result<GLuint, ShaderCompilationError> {
 
     let mut vert_reader = BufReader::new(match File::open(&vert_file_name) {

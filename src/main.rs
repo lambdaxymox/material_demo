@@ -252,7 +252,7 @@ fn create_shader_source() -> ShaderSource {
     }
 }
             
-fn send_to_gpu_shaders(context: &mut backend::GLState, source: ShaderSource) -> GLuint {
+fn send_to_gpu_shaders(context: &mut backend::OpenGLContext, source: ShaderSource) -> GLuint {
     let mut vert_reader = io::Cursor::new(source.vert_source);
     let mut frag_reader = io::Cursor::new(source.frag_source);
     let result = backend::compile_from_reader(
@@ -276,7 +276,7 @@ fn init_logger(log_file: &str) {
 }
 
 /// Create and OpenGL context.
-fn init_gl(width: u32, height: u32) -> backend::GLState {
+fn init_gl(width: u32, height: u32) -> backend::OpenGLContext {
     let context = match backend::start_gl(width, height) {
         Ok(val) => val,
         Err(e) => {
@@ -301,8 +301,8 @@ fn main() {
         v_norm_vbo) = send_to_gpu_mesh(shader, &mesh);
 
     while !context.window.should_close() {
-        let elapsed_seconds = backend::update_timers(&mut context);
-        backend::update_fps_counter(&mut context);
+        let elapsed_seconds = context.update_timers();
+        context.update_fps_counter();
         context.glfw.poll_events();
         match context.window.get_key(Key::Escape) {
             Action::Press | Action::Repeat => {
