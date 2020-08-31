@@ -160,12 +160,6 @@ fn send_to_gpu_mesh(shader: GLuint, mesh: &ObjMesh) -> (GLuint, GLuint, GLuint, 
     debug_assert!(v_pos_loc > -1);
     let v_pos_loc = v_pos_loc as u32;
 
-    let v_tex_loc = unsafe {
-        gl::GetAttribLocation(shader, backend::gl_str("v_tex").as_ptr())
-    };
-    debug_assert!(v_tex_loc > -1);
-    let v_tex_loc = v_tex_loc as u32;
-
     let v_norm_loc = unsafe {
         gl::GetAttribLocation(shader, backend::gl_str("v_norm").as_ptr())
     };
@@ -219,12 +213,9 @@ fn send_to_gpu_mesh(shader: GLuint, mesh: &ObjMesh) -> (GLuint, GLuint, GLuint, 
         gl::BindVertexArray(vao);
         gl::BindBuffer(gl::ARRAY_BUFFER, v_pos_vbo);
         gl::VertexAttribPointer(v_pos_loc, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
-        gl::BindBuffer(gl::ARRAY_BUFFER, v_tex_vbo);
-        gl::VertexAttribPointer(v_tex_loc, 2, gl::FLOAT, gl::FALSE, 0, ptr::null());
         gl::BindBuffer(gl::ARRAY_BUFFER, v_norm_vbo);
         gl::VertexAttribPointer(v_norm_loc, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
         gl::EnableVertexAttribArray(v_pos_loc);
-        gl::EnableVertexAttribArray(v_tex_loc);
         gl::EnableVertexAttribArray(v_norm_loc);
     }
     debug_assert!(vao > 0);
