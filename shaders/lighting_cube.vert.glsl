@@ -2,7 +2,7 @@
 struct Camera {
     mat4 proj_mat;
     mat4 view_mat;
-}
+};
 
 layout (location = 0) in vec3 v_pos;
 

@@ -259,6 +259,39 @@ fn send_to_gpu_mesh(shader: GLuint, mesh: &ObjMesh) -> (GLuint, GLuint, GLuint) 
     (vao, v_pos_vbo, v_norm_vbo)
 }
 
+fn send_to_gpu_light_mesh(shader: GLuint, mesh: &ObjMesh) -> (GLuint, GLuint) {
+    let v_pos_loc = unsafe {
+        gl::GetAttribLocation(shader, backend::gl_str("v_pos").as_ptr())
+    };
+    debug_assert!(v_pos_loc > -1);
+    let v_pos_loc = v_pos_loc as u32;
+
+    let mut v_pos_vbo = 0;
+    unsafe {
+        gl::GenBuffers(1, &mut v_pos_vbo);
+        gl::BindBuffer(gl::ARRAY_BUFFER, v_pos_vbo);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            (3 * mem::size_of::<GLfloat>() * mesh.points.len()) as GLsizeiptr,
+            mesh.points.as_ptr() as *const GLvoid,
+            gl::STATIC_DRAW
+        );
+    }
+    debug_assert!(v_pos_vbo > 0);
+
+    let mut vao = 0;
+    unsafe {
+        gl::GenVertexArrays(1, &mut vao);
+        gl::BindVertexArray(vao);
+        gl::BindBuffer(gl::ARRAY_BUFFER, v_pos_vbo);
+        gl::VertexAttribPointer(v_pos_loc, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
+        gl::EnableVertexAttribArray(v_pos_loc);
+    }
+    debug_assert!(vao > 0);
+
+    (vao, v_pos_vbo)
+}
+
 #[derive(Copy, Clone)]
 struct ShaderSource {
     vert_name: &'static str,
@@ -365,8 +398,7 @@ fn main() {
     let light_shader = send_to_gpu_shaders(&mut context, light_shader_source);
     let (
         light_vao,
-        light_v_pos_vbo,
-        light_v_norm_vbo) = send_to_gpu_mesh(light_shader, &light_mesh);
+        light_v_pos_vbo) = send_to_gpu_light_mesh(light_shader, &light_mesh);
     send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
     send_to_gpu_uniforms_camera(light_shader, &camera);
 
