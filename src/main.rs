@@ -267,7 +267,7 @@ struct ShaderSource {
     frag_source: &'static str,
 }
 
-fn create_shader_source() -> ShaderSource {
+fn create_mesh_shader_source() -> ShaderSource {
     let vert_source = include_str!("../shaders/mesh.vert.glsl");
     let frag_source = include_str!("../shaders/mesh.frag.glsl");
     
@@ -275,6 +275,18 @@ fn create_shader_source() -> ShaderSource {
         vert_name: "mesh.vert.glsl",
         vert_source: vert_source,
         frag_name: "mesh.frag.glsl",
+        frag_source: frag_source,
+    }
+}
+
+fn create_light_shader_source() -> ShaderSource {
+    let vert_source = include_str!("../shaders/lighting_cube.vert.glsl");
+    let frag_source = include_str!("../shaders/lighting_cube.frag.glsl");
+
+    ShaderSource {
+        vert_name: "lighting_cube.vert.glsl",
+        vert_source: vert_source,
+        frag_name: "lighting_cube.frag.glsl",
         frag_source: frag_source,
     }
 }
@@ -325,7 +337,7 @@ fn main() {
     );
     */
     let mesh = create_box_mesh();
-    let model_mat = Matrix4::one();
+    let light_mesh = create_box_mesh();
     init_logger("opengl_demo.log");
     info!("BEGIN LOG");
     let mut camera = create_camera(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -333,16 +345,30 @@ fn main() {
     let light_position_world: Vector3<f32> = Vector3::new(1.2, 1.0, 2.0);
     let material = material::material_table()["jade"];
     let mut context = init_gl(SCREEN_WIDTH, SCREEN_HEIGHT);
-    let shader_source = create_shader_source();
-    let shader = send_to_gpu_shaders(&mut context, shader_source);
+
+    //  Load the model.
+    let mesh_model_mat = Matrix4::one();
+    let mesh_shader_source = create_mesh_shader_source();
+    let mesh_shader = send_to_gpu_shaders(&mut context, mesh_shader_source);
     let (
-        vao, 
-        v_pos_vbo, 
-        v_norm_vbo) = send_to_gpu_mesh(shader, &mesh);
-    send_to_gpu_uniforms_mesh(shader, &model_mat);
-    send_to_gpu_uniforms_camera(shader, &camera);
-    send_to_gpu_uniforms_light(shader, &light, light_position_world);
-    send_to_gpu_uniforms_material(shader, &material);
+        mesh_vao, 
+        mesh_v_pos_vbo, 
+        mesh_v_norm_vbo) = send_to_gpu_mesh(mesh_shader, &mesh);
+    send_to_gpu_uniforms_mesh(mesh_shader, &mesh_model_mat);
+    send_to_gpu_uniforms_camera(mesh_shader, &camera);
+    send_to_gpu_uniforms_light(mesh_shader, &light, light_position_world);
+    send_to_gpu_uniforms_material(mesh_shader, &material);
+
+    // Load the lighting cube model.
+    let light_model_mat = Matrix4::from_scale(0.2) * Matrix4::from_translation(light_position_world);
+    let light_shader_source = create_light_shader_source();
+    let light_shader = send_to_gpu_shaders(&mut context, light_shader_source);
+    let (
+        light_vao,
+        light_v_pos_vbo,
+        light_v_norm_vbo) = send_to_gpu_mesh(light_shader, &light_mesh);
+    send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
+    send_to_gpu_uniforms_camera(light_shader, &camera);
 
     unsafe {
         gl::Enable(gl::DEPTH_TEST);
@@ -460,16 +486,19 @@ fn main() {
 
         if cam_moved {
             camera.update(move_to, cam_attitude);
-            send_to_gpu_uniforms_camera(shader, &camera);
+            send_to_gpu_uniforms_camera(mesh_shader, &camera);
         }
 
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
             gl::ClearBufferfv(gl::DEPTH, 0, &CLEAR_DEPTH[0] as *const GLfloat);
             gl::Viewport(0, 0, SCREEN_WIDTH as GLint, SCREEN_HEIGHT as GLint);
-            gl::UseProgram(shader);
-            gl::BindVertexArray(vao);
+            gl::UseProgram(mesh_shader);
+            gl::BindVertexArray(mesh_vao);
             gl::DrawArrays(gl::TRIANGLES, 0, mesh.len() as i32);
+            gl::UseProgram(light_shader);
+            gl::BindVertexArray(light_vao);
+            gl::DrawArrays(gl::TRIANGLES, 0, light_mesh.len() as i32);
         }
 
         context.window.swap_buffers();
