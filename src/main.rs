@@ -393,7 +393,7 @@ fn main() {
     send_to_gpu_uniforms_material(mesh_shader, &material);
 
     // Load the lighting cube model.
-    let light_model_mat = Matrix4::from_scale(0.2) * Matrix4::from_translation(light_position_world);
+    let light_model_mat = Matrix4::from_translation(light_position_world) * Matrix4::from_scale(0.2);
     let light_shader_source = create_light_shader_source();
     let light_shader = send_to_gpu_shaders(&mut context, light_shader_source);
     let (
@@ -519,6 +519,7 @@ fn main() {
         if cam_moved {
             camera.update(move_to, cam_attitude);
             send_to_gpu_uniforms_camera(mesh_shader, &camera);
+            send_to_gpu_uniforms_camera(light_shader, &camera);
         }
 
         unsafe {
