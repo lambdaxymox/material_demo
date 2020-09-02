@@ -14,6 +14,9 @@ mod camera;
 mod light;
 mod material;
 
+use backend::{
+    OpenGLContext,
+};
 use camera::{
     CameraSpecification,
     CameraKinematics,
@@ -30,7 +33,11 @@ use gdmath::{
     Vector3,
     One,
 };
-use glfw::{Action, Context, Key};
+use glfw::{
+    Action, 
+    Context, 
+    Key
+};
 use gl::types::{
     GLfloat,
     GLint,
@@ -359,6 +366,19 @@ fn init_gl(width: u32, height: u32) -> backend::OpenGLContext {
     context
 }
 
+/// The GLFW frame buffer size callback function. This is normally set using 
+/// the GLFW `glfwSetFramebufferSizeCallback` function, but instead we explicitly
+/// handle window resizing in our state updates on the application side. Run this function 
+/// whenever the size of the viewport changes.
+#[inline]
+fn framebuffer_size_callback(context: &mut OpenGLContext, width: u32, height: u32) {
+    context.width = width;
+    context.height = height;
+    unsafe {
+        gl::Viewport(0, 0, width as i32, height as i32);
+    }
+}
+
 fn main() {
     /*
     let mesh = create_mesh();
@@ -414,6 +434,11 @@ fn main() {
         let elapsed_seconds = context.update_timers();
         context.update_fps_counter();
         context.glfw.poll_events();
+        let (width, height) = context.window.get_framebuffer_size();
+        if (width != context.width as i32) && (height != context.height as i32) {
+            framebuffer_size_callback(&mut context, width as u32, height as u32);
+        }
+        
         match context.window.get_key(Key::Escape) {
             Action::Press | Action::Repeat => {
                 context.window.set_should_close(true);
