@@ -441,7 +441,6 @@ fn main() {
         }
 
         // Camera control keys.
-        let mut cam_moved = false;
         let mut move_to = gdmath::vec3((0.0, 0.0, 0.0));
         let mut cam_attitude = CameraAttitude::new(0.0, 0.0, 0.0);
         match context.window.get_key(Key::Escape) {
@@ -453,90 +452,72 @@ fn main() {
         match context.window.get_key(Key::A) {
             Action::Press | Action::Repeat => {
                 move_to.x -= camera.speed * (elapsed_seconds as GLfloat);
-                cam_moved = true;
             }
             _ => {}
             }
         match context.window.get_key(Key::D) {
             Action::Press | Action::Repeat => {
                 move_to.x += camera.speed * (elapsed_seconds as GLfloat);
-                cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::Q) {
             Action::Press | Action::Repeat => {
                 move_to.y += camera.speed * (elapsed_seconds as GLfloat);
-                cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::E) {
             Action::Press | Action::Repeat => {
                 move_to.y -= camera.speed * (elapsed_seconds as GLfloat);
-                cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::W) {
             Action::Press | Action::Repeat => {
                 move_to.z -= camera.speed * (elapsed_seconds as GLfloat);
-                cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::S) {
             Action::Press | Action::Repeat => {
                 move_to.z += camera.speed * (elapsed_seconds as GLfloat);
-                cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::Left) {
             Action::Press | Action::Repeat => {
                 cam_attitude.yaw += camera.yaw_speed * (elapsed_seconds as GLfloat);
-                cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::Right) {
             Action::Press | Action::Repeat => {
                 cam_attitude.yaw -= camera.yaw_speed * (elapsed_seconds as GLfloat);
-                cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::Up) {
             Action::Press | Action::Repeat => {
                 cam_attitude.pitch += camera.yaw_speed * (elapsed_seconds as GLfloat);
-                cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::Down) {
             Action::Press | Action::Repeat => {
                 cam_attitude.pitch -= camera.yaw_speed * (elapsed_seconds as GLfloat);
-                cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::Z) {
             Action::Press | Action::Repeat => {
                 cam_attitude.roll -= camera.yaw_speed * (elapsed_seconds as GLfloat);
-                cam_moved = true;
             }
             _ => {}
         }
         match context.window.get_key(Key::C) {
             Action::Press | Action::Repeat => {
                 cam_attitude.roll += camera.yaw_speed * (elapsed_seconds as GLfloat);
-                cam_moved = true;
-            }
-            _ => {}
-        }
-        match context.window.get_key(Key::Escape) {
-            Action::Press | Action::Repeat => {
-                context.window.set_should_close(true);
             }
             _ => {}
         }
