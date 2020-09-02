@@ -1,22 +1,39 @@
 #![allow(dead_code)]
 use crate::gl;
 use crate::gl::types::{
-    GLboolean, GLchar, GLenum, GLfloat, GLint, GLubyte, GLuint
+    GLboolean, 
+    GLchar, 
+    GLenum, 
+    GLfloat, 
+    GLint, 
+    GLubyte, 
+    GLuint
 };
 use glfw;
-use glfw::{Context, Glfw};
-
+use glfw::{
+    Context, 
+    Glfw
+};
 use std::error;
-use std::ffi::{CStr, CString};
+use std::ffi::{
+    CStr, 
+    CString
+};
 use std::fs::File;
-use std::io::{Read, BufReader};
+use std::io::{
+    Read, 
+    BufReader
+};
 use std::sync::mpsc::Receiver;
 use std::ptr;
 use std::fmt;
 use std::mem;
 use std::path::Path;
 
-use log::{info, error};
+use log::{
+    info, 
+    error
+};
 
 
 // 256 Kilobytes.
@@ -192,7 +209,7 @@ fn __init_glfw() -> Glfw {
 
     // We must place the window hints before creating the window because
     // glfw cannot change the properties of a window after it has been created.
-    glfw.window_hint(glfw::WindowHint::Resizable(false));
+    glfw.window_hint(glfw::WindowHint::Resizable(true));
     glfw.window_hint(glfw::WindowHint::Samples(Some(4)));
     glfw.window_hint(glfw::WindowHint::ContextVersionMajor(3));
     glfw.window_hint(glfw::WindowHint::ContextVersionMinor(3));
@@ -210,7 +227,7 @@ fn __init_glfw() -> Glfw {
 
     // We must place the window hints before creating the window because
     // glfw cannot change the properties of a window after it has been created.
-    glfw.window_hint(glfw::WindowHint::Resizable(false));
+    glfw.window_hint(glfw::WindowHint::Resizable(true));
     glfw.window_hint(glfw::WindowHint::Samples(Some(4)));
     glfw.window_hint(glfw::WindowHint::ContextVersionMajor(3));
     glfw.window_hint(glfw::WindowHint::ContextVersionMinor(3));
@@ -227,7 +244,7 @@ fn __init_glfw() -> Glfw {
 
     // We must place the window hints before creating the window because
     // glfw cannot change the properties of a window after it has been created.
-    glfw.window_hint(glfw::WindowHint::Resizable(false));
+    glfw.window_hint(glfw::WindowHint::Resizable(true));
     glfw.window_hint(glfw::WindowHint::Samples(Some(4)));
 
     glfw

@@ -427,7 +427,7 @@ fn main() {
         gl::DepthFunc(gl::LESS);
         gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
         gl::ClearBufferfv(gl::DEPTH, 0, &CLEAR_DEPTH[0] as *const GLfloat);
-        gl::Viewport(0, 0, SCREEN_WIDTH as GLint, SCREEN_HEIGHT as GLint);
+        gl::Viewport(0, 0, context.width as GLint, context.height as GLint);
     }
 
     while !context.window.should_close() {
@@ -436,6 +436,7 @@ fn main() {
         context.glfw.poll_events();
         let (width, height) = context.window.get_framebuffer_size();
         if (width != context.width as i32) && (height != context.height as i32) {
+            camera.update_viewport(width as u32, height as u32);
             framebuffer_size_callback(&mut context, width as u32, height as u32);
         }
         
@@ -541,16 +542,14 @@ fn main() {
             _ => {}
         }
 
-        if cam_moved {
-            camera.update(move_to, cam_attitude);
-            send_to_gpu_uniforms_camera(mesh_shader, &camera);
-            send_to_gpu_uniforms_camera(light_shader, &camera);
-        }
+        camera.update(move_to, cam_attitude);
+        send_to_gpu_uniforms_camera(mesh_shader, &camera);
+        send_to_gpu_uniforms_camera(light_shader, &camera);
 
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
             gl::ClearBufferfv(gl::DEPTH, 0, &CLEAR_DEPTH[0] as *const GLfloat);
-            gl::Viewport(0, 0, SCREEN_WIDTH as GLint, SCREEN_HEIGHT as GLint);
+            gl::Viewport(0, 0, context.width as GLint, context.height as GLint);
             gl::UseProgram(mesh_shader);
             gl::BindVertexArray(mesh_vao);
             gl::DrawArrays(gl::TRIANGLES, 0, mesh.len() as i32);

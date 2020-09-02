@@ -4,7 +4,8 @@ use gdmath::{
     Vector3,
     Vector4,
     Matrix4, 
-    Quaternion
+    Quaternion,
+    ScalarFloat,
 };
 use std::fmt;
 
@@ -17,7 +18,7 @@ pub struct CameraSpecification<S> {
     aspect: S,
 }
 
-impl<S> CameraSpecification<S> where S: gdmath::ScalarFloat {
+impl<S> CameraSpecification<S> where S: ScalarFloat {
     pub fn new(near: S, far: S, fovy: Degrees<S>, aspect: S) -> CameraSpecification<S> {
         CameraSpecification {
             near: near,
@@ -39,7 +40,7 @@ pub struct CameraKinematics<S> {
     axis: Quaternion<S>,
 }
 
-impl<S> CameraKinematics<S> where S: gdmath::ScalarFloat {
+impl<S> CameraKinematics<S> where S: ScalarFloat {
     pub fn new(
         speed: S, 
         yaw_speed: S, 
@@ -69,7 +70,7 @@ pub struct CameraAttitude<S> {
     pub yaw: S,
 }
 
-impl<S> CameraAttitude<S> where S: gdmath::ScalarFloat {
+impl<S> CameraAttitude<S> where S: ScalarFloat {
     #[inline]
     pub fn new(roll: S, pitch: S, yaw: S) -> CameraAttitude<S> {
         CameraAttitude {
@@ -105,7 +106,7 @@ pub struct Camera<S> {
     pub view_mat: Matrix4<S>,
 }
 
-impl<S> fmt::Display for Camera<S> where S: gdmath::ScalarFloat + fmt::Display {
+impl<S> fmt::Display for Camera<S> where S: ScalarFloat + fmt::Display {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut output = String::from("Camera model:\n");
         output.push_str(&format!("near: {}\n", self.near));
@@ -203,7 +204,16 @@ impl<S> Camera<S> where S: gdmath::ScalarFloat {
         Vector3::new(zero, zero, -one)
     }
 
-    /// Update the camera position in world space.
+    /// Update the camera viewport dimensions in case the viewport dimensions have changed.
+    #[inline]
+    pub fn update_viewport(&mut self, width: u32, height: u32) {
+        let width_float = gdmath::num_traits::cast::<u32, S>(width).unwrap();
+        let height_float = gdmath::num_traits::cast::<u32, S>(height).unwrap();
+        self.aspect = width_float / height_float;
+        self.proj_mat = gdmath::perspective((self.fovy, self.aspect, self.near, self.far));
+    }
+
+    /// Update the camera position and attitude in world space.
     #[inline]
     pub fn update(&mut self, delta_position: Vector3<S>, delta_attitude: CameraAttitude<S>) {
         // Update the axis of rotation of the camera.
