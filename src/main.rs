@@ -439,18 +439,17 @@ fn main() {
             camera.update_viewport(width as u32, height as u32);
             framebuffer_size_callback(&mut context, width as u32, height as u32);
         }
-        
+
+        // Camera control keys.
+        let mut cam_moved = false;
+        let mut move_to = gdmath::vec3((0.0, 0.0, 0.0));
+        let mut cam_attitude = CameraAttitude::new(0.0, 0.0, 0.0);
         match context.window.get_key(Key::Escape) {
             Action::Press | Action::Repeat => {
                 context.window.set_should_close(true);
             }
             _ => {}
         }
-
-        // Camera control keys.
-        let mut cam_moved = false;
-        let mut move_to = gdmath::vec3((0.0, 0.0, 0.0));
-        let mut cam_attitude = CameraAttitude::new(0.0, 0.0, 0.0);
         match context.window.get_key(Key::A) {
             Action::Press | Action::Repeat => {
                 move_to.x -= camera.speed * (elapsed_seconds as GLfloat);
