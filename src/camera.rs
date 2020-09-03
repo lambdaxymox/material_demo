@@ -8,6 +8,7 @@ use gdmath::{
     ScalarFloat,
 };
 use std::fmt;
+use std::ops;
 
 
 const MOVE_LEFT: u16             = 1 << 0;
@@ -58,7 +59,7 @@ impl CameraMovement {
     /// If the camera movement is already present in the compound camera movement,
     /// nothing changes.
     #[inline]
-    pub fn add(self, movement: SimpleCameraMovement) -> CameraMovement {
+    fn add_movement(self, movement: SimpleCameraMovement) -> CameraMovement {
         use SimpleCameraMovement::*;
         let move_to = match movement {
             MoveLeft => MOVE_LEFT,
@@ -85,7 +86,7 @@ impl CameraMovement {
     /// If the camera movement is not present in the compound camera movement, 
     /// nothing changes.
     #[inline]
-    pub fn subtract(self, movement: SimpleCameraMovement) -> CameraMovement {
+    fn subtract_movement(self, movement: SimpleCameraMovement) -> CameraMovement {
         use SimpleCameraMovement::*;
         let move_to = match movement {
             MoveLeft => MOVE_LEFT,
@@ -108,6 +109,37 @@ impl CameraMovement {
         } 
     }
 }
+
+impl ops::Add<SimpleCameraMovement> for CameraMovement {
+    type Output = CameraMovement;
+
+    #[inline]
+    fn add(self, other: SimpleCameraMovement) -> Self::Output {
+        self.add_movement(other)
+    }
+}
+
+impl ops::Sub<SimpleCameraMovement> for CameraMovement {
+    type Output = CameraMovement;
+
+    #[inline]
+    fn sub(self, other: SimpleCameraMovement) -> Self::Output {
+        self.subtract_movement(other)
+    }
+}
+
+impl ops::AddAssign<SimpleCameraMovement> for CameraMovement {
+    fn add_assign(&mut self, other: SimpleCameraMovement) {
+        *self = self.add_movement(other)
+    }
+}
+
+impl ops::SubAssign<SimpleCameraMovement> for CameraMovement {
+    fn sub_assign(&mut self, other: SimpleCameraMovement) {
+        *self = self.subtract_movement(other)
+    }
+}
+
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct CameraSpecification<S> {

@@ -391,73 +391,73 @@ fn process_input(context: &mut OpenGLContext) -> CameraMovement {
     let mut movement = CameraMovement::new();
     match context.window.get_key(Key::A) {
         Action::Press | Action::Repeat => {
-            movement = movement.add(SimpleCameraMovement::MoveLeft);
+            movement += SimpleCameraMovement::MoveLeft;
         }
         _ => {}
         }
     match context.window.get_key(Key::D) {
         Action::Press | Action::Repeat => {
-            movement = movement.add(SimpleCameraMovement::MoveRight);
+            movement += SimpleCameraMovement::MoveRight;
         }
         _ => {}
     }
     match context.window.get_key(Key::Q) {
         Action::Press | Action::Repeat => {
-            movement = movement.add(SimpleCameraMovement::MoveUp);
+            movement += SimpleCameraMovement::MoveUp;
         }
         _ => {}
     }
     match context.window.get_key(Key::E) {
         Action::Press | Action::Repeat => {
-            movement = movement.add(SimpleCameraMovement::MoveDown);
+            movement += SimpleCameraMovement::MoveDown;
         }
         _ => {}
     }
     match context.window.get_key(Key::W) {
         Action::Press | Action::Repeat => {
-            movement = movement.add(SimpleCameraMovement::MoveForward);
+            movement += SimpleCameraMovement::MoveForward;
         }
         _ => {}
     }
     match context.window.get_key(Key::S) {
         Action::Press | Action::Repeat => {
-            movement = movement.add(SimpleCameraMovement::MoveBackward);
+            movement += SimpleCameraMovement::MoveBackward;
         }
         _ => {}
     }
     match context.window.get_key(Key::Left) {
         Action::Press | Action::Repeat => {
-            movement = movement.add(SimpleCameraMovement::YawLeft);
+            movement += SimpleCameraMovement::YawLeft;
         }
         _ => {}
     }
     match context.window.get_key(Key::Right) {
         Action::Press | Action::Repeat => {
-            movement = movement.add(SimpleCameraMovement::YawRight);
+            movement += SimpleCameraMovement::YawRight;
         }
         _ => {}
     }
     match context.window.get_key(Key::Up) {
         Action::Press | Action::Repeat => {
-            movement = movement.add(SimpleCameraMovement::PitchUp);
+            movement += SimpleCameraMovement::PitchUp;
         }
         _ => {}
     }
     match context.window.get_key(Key::Down) {
         Action::Press | Action::Repeat => {
-            movement = movement.add(SimpleCameraMovement::PitchDown);
+            movement += SimpleCameraMovement::PitchDown;
         }
         _ => {}
     }
     match context.window.get_key(Key::Z) {
         Action::Press | Action::Repeat => {
-            movement = movement.add(SimpleCameraMovement::RollCounterClockwise);
+            movement += SimpleCameraMovement::RollCounterClockwise;
         }
         _ => {}
     }
     match context.window.get_key(Key::C) {
         Action::Press | Action::Repeat => {
-            movement = movement.add(SimpleCameraMovement::RollClockwise);
+            movement += SimpleCameraMovement::RollClockwise;
         }
         _ => {}
     }
