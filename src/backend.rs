@@ -194,7 +194,7 @@ impl OpenGLContext {
         if elapsed_seconds > FPS_COUNTER_REFRESH_PERIOD_SECONDS {
             self.framerate_time_seconds = current_time_seconds;
             let fps = self.frame_count as f64 / elapsed_seconds;
-            self.window.set_title(&format!("Googly Blocks @ {:.2}", fps));
+            self.window.set_title(&format!("OpenGL DEMO @ {:.2}", fps));
             self.frame_count = 0;
         }
 
@@ -261,7 +261,7 @@ pub fn start_opengl(width: u32, height: u32) -> Result<OpenGLContext, String> {
 
     info!("Started GLFW successfully");
     let maybe_glfw_window = glfw.create_window(
-        width, height, &format!("OPENGL DEMO"), glfw::WindowMode::Windowed
+        width, height, &format!("OpenGL DEMO"), glfw::WindowMode::Windowed
     );
     let (mut window, events) = match maybe_glfw_window {
         Some(tuple) => tuple,
