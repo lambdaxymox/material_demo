@@ -184,32 +184,6 @@ impl LightKinematics {
     }
 }
 
-fn update_light_position(kinematics: &mut LightKinematics, elapsed_seconds: f32) {
-    kinematics.update(elapsed_seconds);
-    /*
-    let scene_center_world = Vector3::<f32>::zero();
-    *light_speed_world = if *light_speed_world < 0.0 { -1.0 } else { 1.0 };
-    let light_radial_speed = 20.0;
-    let light_center_of_oscillation = Vector3::new(1.2, 1.0, 2.0);
-    let light_radius_center_of_oscillation = (light_center_of_oscillation - scene_center_world).magnitude();
-    let radial_vector: Vector3<f32> = (*light_position_world - scene_center_world).normalize();
-    let light_radius_of_oscillation = 1.25;
-    let light_radius_perihelion = light_radius_center_of_oscillation - light_radius_of_oscillation;
-    let light_radius_aphelion = light_radius_center_of_oscillation + light_radius_of_oscillation;
-    let mut light_distance_from_scene_center = (*light_position_world - scene_center_world).magnitude();
-    light_distance_from_scene_center = light_distance_from_scene_center + (light_radial_speed * elapsed_seconds) * *light_speed_world;
-    if light_distance_from_scene_center < light_radius_perihelion {
-        light_distance_from_scene_center = light_radius_perihelion;
-        *light_speed_world = 1.0;
-    } else if light_distance_from_scene_center > light_radius_aphelion {
-        light_distance_from_scene_center = light_radius_aphelion;
-        *light_speed_world = -1.0;
-    }
-
-    *light_position_world = light_distance_from_scene_center * radial_vector;
-    */
-}
-
 fn send_to_gpu_uniforms_mesh(shader: GLuint, model_mat: &Matrix4<f32>) {
     let model_mat_loc = unsafe {
         gl::GetUniformLocation(shader, backend::gl_str("model_mat").as_ptr())
@@ -606,7 +580,7 @@ fn main() {
             framebuffer_size_callback(&mut context, width as u32, height as u32);
         }
 
-        update_light_position(&mut light_kinematics, elapsed_seconds as f32);
+        light_kinematics.update(elapsed_seconds as f32);
         let delta_movement = process_input(&mut context);
         camera.update_movement(delta_movement, elapsed_seconds as f32);
         send_to_gpu_uniforms_camera(mesh_shader, &camera);
