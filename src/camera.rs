@@ -48,7 +48,7 @@ pub struct CameraMovement {
 }
 
 impl CameraMovement {
-    const fn new() -> CameraMovement {
+    pub const fn new() -> CameraMovement {
         CameraMovement {
             total: 0
         }

@@ -332,7 +332,7 @@ fn create_light_shader_source() -> ShaderSource {
         frag_source: frag_source,
     }
 }
-            
+
 fn send_to_gpu_shaders(context: &mut backend::OpenGLContext, source: ShaderSource) -> GLuint {
     let mut vert_reader = io::Cursor::new(source.vert_source);
     let mut frag_reader = io::Cursor::new(source.frag_source);
@@ -381,93 +381,103 @@ fn framebuffer_size_callback(context: &mut OpenGLContext, width: u32, height: u3
     }
 }
 
-fn process_input(
-    context: &mut OpenGLContext, 
-    camera: &mut Camera<f32>, 
-    elapsed_seconds: f64) -> (Vector3<f32>, CameraAttitude<f32>) {
-    
-    let mut delta_position = gdmath::vec3((0.0, 0.0, 0.0));
-    let mut delta_attitude = CameraAttitude::new(0.0, 0.0, 0.0);
+fn process_input(context: &mut OpenGLContext) -> CameraMovement {
     match context.window.get_key(Key::Escape) {
         Action::Press | Action::Repeat => {
             context.window.set_should_close(true);
         }
         _ => {}
     }
+
+    //let mut delta_position = gdmath::vec3((0.0, 0.0, 0.0));
+    //let mut delta_attitude = CameraAttitude::new(0.0, 0.0, 0.0);
+    let mut movement = CameraMovement::new();
     match context.window.get_key(Key::A) {
         Action::Press | Action::Repeat => {
-            delta_position.x -= camera.speed * (elapsed_seconds as f32);
+            //delta_position.x -= camera.speed * (elapsed_seconds as f32);
+            movement = movement.add(SimpleCameraMovement::MoveLeft);
         }
         _ => {}
         }
     match context.window.get_key(Key::D) {
         Action::Press | Action::Repeat => {
-            delta_position.x += camera.speed * (elapsed_seconds as f32);
+            //delta_position.x += camera.speed * (elapsed_seconds as f32);
+            movement = movement.add(SimpleCameraMovement::MoveRight);
         }
         _ => {}
     }
     match context.window.get_key(Key::Q) {
         Action::Press | Action::Repeat => {
-            delta_position.y += camera.speed * (elapsed_seconds as f32);
+            //delta_position.y += camera.speed * (elapsed_seconds as f32);
+            movement = movement.add(SimpleCameraMovement::MoveUp);
         }
         _ => {}
     }
     match context.window.get_key(Key::E) {
         Action::Press | Action::Repeat => {
-            delta_position.y -= camera.speed * (elapsed_seconds as f32);
+            //delta_position.y -= camera.speed * (elapsed_seconds as f32);
+            movement = movement.add(SimpleCameraMovement::MoveDown);
         }
         _ => {}
     }
     match context.window.get_key(Key::W) {
         Action::Press | Action::Repeat => {
-            delta_position.z -= camera.speed * (elapsed_seconds as f32);
+            //delta_position.z -= camera.speed * (elapsed_seconds as f32);
+            movement = movement.add(SimpleCameraMovement::MoveForward);
         }
         _ => {}
     }
     match context.window.get_key(Key::S) {
         Action::Press | Action::Repeat => {
-            delta_position.z += camera.speed * (elapsed_seconds as f32);
+            //delta_position.z += camera.speed * (elapsed_seconds as f32);
+            movement = movement.add(SimpleCameraMovement::MoveBackward);
         }
         _ => {}
     }
     match context.window.get_key(Key::Left) {
         Action::Press | Action::Repeat => {
-            delta_attitude.yaw += camera.yaw_speed * (elapsed_seconds as f32);
+            //delta_attitude.yaw += camera.yaw_speed * (elapsed_seconds as f32);
+            movement = movement.add(SimpleCameraMovement::YawLeft);
         }
         _ => {}
     }
     match context.window.get_key(Key::Right) {
         Action::Press | Action::Repeat => {
-            delta_attitude.yaw -= camera.yaw_speed * (elapsed_seconds as f32);
+            //delta_attitude.yaw -= camera.yaw_speed * (elapsed_seconds as f32);
+            movement = movement.add(SimpleCameraMovement::YawRight);
         }
         _ => {}
     }
     match context.window.get_key(Key::Up) {
         Action::Press | Action::Repeat => {
-            delta_attitude.pitch += camera.yaw_speed * (elapsed_seconds as f32);
+            //delta_attitude.pitch += camera.yaw_speed * (elapsed_seconds as f32);
+            movement = movement.add(SimpleCameraMovement::PitchUp);
         }
         _ => {}
     }
     match context.window.get_key(Key::Down) {
         Action::Press | Action::Repeat => {
-            delta_attitude.pitch -= camera.yaw_speed * (elapsed_seconds as f32);
+            //delta_attitude.pitch -= camera.yaw_speed * (elapsed_seconds as f32);
+            movement = movement.add(SimpleCameraMovement::PitchDown);
         }
         _ => {}
     }
     match context.window.get_key(Key::Z) {
         Action::Press | Action::Repeat => {
-            delta_attitude.roll -= camera.yaw_speed * (elapsed_seconds as f32);
+            //delta_attitude.roll -= camera.yaw_speed * (elapsed_seconds as f32);
+            movement = movement.add(SimpleCameraMovement::RollCounterClockwise);
         }
         _ => {}
     }
     match context.window.get_key(Key::C) {
         Action::Press | Action::Repeat => {
-            delta_attitude.roll += camera.yaw_speed * (elapsed_seconds as f32);
+            //delta_attitude.roll += camera.yaw_speed * (elapsed_seconds as f32);
+            movement = movement.add(SimpleCameraMovement::RollClockwise);
         }
         _ => {}
     }
 
-    (delta_position, delta_attitude)
+    movement
 }
 
 fn main() {
@@ -531,10 +541,8 @@ fn main() {
             framebuffer_size_callback(&mut context, width as u32, height as u32);
         }
 
-        let (
-            delta_position, 
-            delta_attitude) = process_input(&mut context, &mut camera, elapsed_seconds);
-        camera.update(delta_position, delta_attitude);
+        let delta_movement = process_input(&mut context);
+        camera.update_movement(delta_movement, elapsed_seconds as f32);
         send_to_gpu_uniforms_camera(mesh_shader, &camera);
         send_to_gpu_uniforms_camera(light_shader, &camera);
 
