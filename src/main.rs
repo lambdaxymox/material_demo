@@ -29,6 +29,7 @@ use material::Material;
 use gdmath::{
     Degrees,
     Quaternion,
+    Magnitude,
     Matrix4,
     Storage,
     Vector3,
@@ -130,11 +131,27 @@ fn create_light() -> PointLight<f32> {
     PointLight::new(ambient, diffuse, specular)
 }
 
-fn update_light_position(light_position_world: &mut Vector3<f32>) {
+fn update_light_position(light_position_world: &mut Vector3<f32>, light_speed_world: &mut f32, elapsed_seconds: f32) {
     let scene_center_world = Vector3::<f32>::zero();
-    let light_radial_velocity = 20.0;
+    *light_speed_world = if *light_speed_world < 0.0 { -1.0 } else { 1.0 };
+    let light_radial_speed = 3.0;
+    let light_center_of_oscillation = Vector3::new(1.2, 1.0, 2.0);
+    let light_radius_center_of_oscillation = (light_center_of_oscillation - scene_center_world).magnitude();
+    let radial_vector: Vector3<f32> = (*light_position_world - scene_center_world).normalize();
+    let light_radius_of_oscillation = 1.75;
+    let light_radius_perihelion = light_radius_center_of_oscillation - light_radius_of_oscillation;
+    let light_radius_aphelion = light_radius_center_of_oscillation + light_radius_of_oscillation;
+    let mut light_distance_from_scene_center = (*light_position_world - scene_center_world).magnitude();
+    light_distance_from_scene_center = light_distance_from_scene_center + (light_radial_speed * elapsed_seconds) * *light_speed_world;
+    if light_distance_from_scene_center < light_radius_perihelion {
+        light_distance_from_scene_center = light_radius_perihelion;
+        *light_speed_world = 1.0;
+    } else if light_distance_from_scene_center > light_radius_aphelion {
+        light_distance_from_scene_center = light_radius_aphelion;
+        *light_speed_world = -1.0;
+    }
 
-    light_position_world;
+    *light_position_world = light_distance_from_scene_center * radial_vector;
 }
 
 fn send_to_gpu_uniforms_mesh(shader: GLuint, model_mat: &Matrix4<f32>) {
@@ -483,6 +500,7 @@ fn main() {
     let mut camera = create_camera(SCREEN_WIDTH, SCREEN_HEIGHT);
     let light = create_light();
     let mut light_position_world: Vector3<f32> = Vector3::new(1.2, 1.0, 2.0);
+    let mut light_speed_world: f32 = 1.0;
     let material = material::material_table()["jade"];
     let mut context = init_gl(SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -527,11 +545,15 @@ fn main() {
             framebuffer_size_callback(&mut context, width as u32, height as u32);
         }
 
-        update_light_position(&mut light_position_world);
+        update_light_position(&mut light_position_world, &mut light_speed_world, elapsed_seconds as f32);
         let delta_movement = process_input(&mut context);
         camera.update_movement(delta_movement, elapsed_seconds as f32);
         send_to_gpu_uniforms_camera(mesh_shader, &camera);
         send_to_gpu_uniforms_camera(light_shader, &camera);
+        send_to_gpu_uniforms_light(mesh_shader, &light, light_position_world);
+
+        let light_model_mat = Matrix4::from_translation(light_position_world) * Matrix4::from_scale(0.2);
+        send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
 
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
