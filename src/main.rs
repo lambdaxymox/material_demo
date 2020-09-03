@@ -131,14 +131,69 @@ fn create_light() -> PointLight<f32> {
     PointLight::new(ambient, diffuse, specular)
 }
 
-fn update_light_position(light_position_world: &mut Vector3<f32>, light_speed_world: &mut f32, elapsed_seconds: f32) {
+struct LightKinematics {
+    scene_center: Vector3<f32>,
+    radial_speed: f32,
+    center_of_oscillation: Vector3<f32>,
+    radius_of_oscillation: f32,
+    position: Vector3<f32>,
+    radial_unit_velocity: f32,
+}
+
+impl LightKinematics {
+    pub fn new(
+        scene_center: Vector3<f32>, 
+        radial_speed: f32, 
+        center_of_oscillation: Vector3<f32>, 
+        radius_of_oscillation: f32) -> LightKinematics {
+        
+        let radial_unit_velocity = 1.0;
+        let position = center_of_oscillation;
+        LightKinematics {
+            scene_center: scene_center,
+            radial_speed: radial_speed,
+            center_of_oscillation: center_of_oscillation,
+            radius_of_oscillation: radius_of_oscillation,
+            position: position,
+            radial_unit_velocity: radial_unit_velocity,
+        }
+    }
+
+    #[inline]
+    fn position(&self) -> Vector3<f32> {
+        self.position
+    }
+
+    fn update(&mut self, elapsed_seconds: f32) {
+        self.radial_unit_velocity = if self.radial_unit_velocity < 0.0 { -1.0 } else { 1.0 };
+        let radius_center_of_oscillation = (self.center_of_oscillation - self.scene_center).magnitude();
+        let radial_vector: Vector3<f32> = (self.position - self.scene_center).normalize();
+        let radius_perihelion = radius_center_of_oscillation - self.radius_of_oscillation;
+        let radius_aphelion = radius_center_of_oscillation + self.radius_of_oscillation;
+        let mut distance_from_scene_center = (self.position - self.scene_center).magnitude();
+        distance_from_scene_center = distance_from_scene_center + (self.radial_speed * elapsed_seconds) * self.radial_unit_velocity;
+        if distance_from_scene_center < radius_perihelion {
+            distance_from_scene_center = radius_perihelion;
+            self.radial_unit_velocity = 1.0;
+        } else if distance_from_scene_center > radius_aphelion {
+            distance_from_scene_center = radius_aphelion;
+            self.radial_unit_velocity = -1.0;
+        }
+    
+        self.position = distance_from_scene_center * radial_vector; 
+    }
+}
+
+fn update_light_position(kinematics: &mut LightKinematics, elapsed_seconds: f32) {
+    kinematics.update(elapsed_seconds);
+    /*
     let scene_center_world = Vector3::<f32>::zero();
     *light_speed_world = if *light_speed_world < 0.0 { -1.0 } else { 1.0 };
-    let light_radial_speed = 3.0;
+    let light_radial_speed = 20.0;
     let light_center_of_oscillation = Vector3::new(1.2, 1.0, 2.0);
     let light_radius_center_of_oscillation = (light_center_of_oscillation - scene_center_world).magnitude();
     let radial_vector: Vector3<f32> = (*light_position_world - scene_center_world).normalize();
-    let light_radius_of_oscillation = 1.75;
+    let light_radius_of_oscillation = 1.25;
     let light_radius_perihelion = light_radius_center_of_oscillation - light_radius_of_oscillation;
     let light_radius_aphelion = light_radius_center_of_oscillation + light_radius_of_oscillation;
     let mut light_distance_from_scene_center = (*light_position_world - scene_center_world).magnitude();
@@ -152,6 +207,7 @@ fn update_light_position(light_position_world: &mut Vector3<f32>, light_speed_wo
     }
 
     *light_position_world = light_distance_from_scene_center * radial_vector;
+    */
 }
 
 fn send_to_gpu_uniforms_mesh(shader: GLuint, model_mat: &Matrix4<f32>) {
@@ -497,10 +553,15 @@ fn main() {
     let light_mesh = create_box_mesh();
     init_logger("opengl_demo.log");
     info!("BEGIN LOG");
+    let scene_center_world = Vector3::<f32>::zero();
     let mut camera = create_camera(SCREEN_WIDTH, SCREEN_HEIGHT);
     let light = create_light();
-    let mut light_position_world: Vector3<f32> = Vector3::new(1.2, 1.0, 2.0);
-    let mut light_speed_world: f32 = 1.0;
+    let light_radial_speed = 3.0;
+    let light_center_of_oscillation = Vector3::new(1.2, 1.0, 2.0);
+    let light_radius_of_oscillation = 1.25;
+    let mut light_kinematics = LightKinematics::new(
+        scene_center_world, light_radial_speed, light_center_of_oscillation, light_radius_of_oscillation
+    );
     let material = material::material_table()["jade"];
     let mut context = init_gl(SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -514,11 +575,11 @@ fn main() {
         mesh_v_norm_vbo) = send_to_gpu_mesh(mesh_shader, &mesh);
     send_to_gpu_uniforms_mesh(mesh_shader, &mesh_model_mat);
     send_to_gpu_uniforms_camera(mesh_shader, &camera);
-    send_to_gpu_uniforms_light(mesh_shader, &light, light_position_world);
+    send_to_gpu_uniforms_light(mesh_shader, &light, light_kinematics.position());
     send_to_gpu_uniforms_material(mesh_shader, &material);
 
     // Load the lighting cube model.
-    let light_model_mat = Matrix4::from_translation(light_position_world) * Matrix4::from_scale(0.2);
+    let light_model_mat = Matrix4::from_translation(light_kinematics.position()) * Matrix4::from_scale(0.2);
     let light_shader_source = create_light_shader_source();
     let light_shader = send_to_gpu_shaders(&mut context, light_shader_source);
     let (
@@ -545,14 +606,14 @@ fn main() {
             framebuffer_size_callback(&mut context, width as u32, height as u32);
         }
 
-        update_light_position(&mut light_position_world, &mut light_speed_world, elapsed_seconds as f32);
+        update_light_position(&mut light_kinematics, elapsed_seconds as f32);
         let delta_movement = process_input(&mut context);
         camera.update_movement(delta_movement, elapsed_seconds as f32);
         send_to_gpu_uniforms_camera(mesh_shader, &camera);
         send_to_gpu_uniforms_camera(light_shader, &camera);
-        send_to_gpu_uniforms_light(mesh_shader, &light, light_position_world);
+        send_to_gpu_uniforms_light(mesh_shader, &light, light_kinematics.position());
 
-        let light_model_mat = Matrix4::from_translation(light_position_world) * Matrix4::from_scale(0.2);
+        let light_model_mat = Matrix4::from_translation(light_kinematics.position()) * Matrix4::from_scale(0.2);
         send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
 
         unsafe {
