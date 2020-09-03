@@ -18,6 +18,8 @@ use backend::{
     OpenGLContext,
 };
 use camera::{
+    SimpleCameraMovement,
+    CameraMovement,
     CameraSpecification,
     CameraKinematics,
     CameraAttitude,

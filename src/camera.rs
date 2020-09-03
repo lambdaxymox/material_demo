@@ -10,6 +10,105 @@ use gdmath::{
 use std::fmt;
 
 
+const MOVE_LEFT: u16             = 1 << 0;
+const MOVE_RIGHT: u16            = 1 << 1;
+const MOVE_UP: u16               = 1 << 2;
+const MOVE_DOWN: u16             = 1 << 3;
+const MOVE_FORWARD: u16          = 1 << 4;
+const MOVE_BACKWARD: u16         = 1 << 5;
+const PITCH_UP: u16              = 1 << 6;
+const PITCH_DOWN: u16            = 1 << 7;
+const YAW_LEFT: u16              = 1 << 8;
+const YAW_RIGHT: u16             = 1 << 9;
+const ROLL_CLOCKWISE: u16        = 1 << 10;
+const ROLL_COUNTERCLOCKWISE: u16 = 1 << 11;
+const NO_MOVEMENT: u16           = 0;
+
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum SimpleCameraMovement {
+    MoveLeft,
+    MoveRight,
+    MoveUp,
+    MoveDown,
+    MoveForward,
+    MoveBackward,
+    PitchUp,
+    PitchDown,
+    YawLeft,
+    YawRight,
+    RollClockwise,
+    RollCounterClockwise,
+    NoMovement,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub struct CameraMovement {
+    total: u16,
+}
+
+impl CameraMovement {
+    const fn new() -> CameraMovement {
+        CameraMovement {
+            total: 0
+        }
+    }
+
+    /// Include a camera movement in the compound camera movement.
+    /// If the camera movement is already present in the compound camera movement,
+    /// nothing changes.
+    #[inline]
+    pub fn add(self, movement: SimpleCameraMovement) -> CameraMovement {
+        use SimpleCameraMovement::*;
+        let move_to = match movement {
+            MoveLeft => MOVE_LEFT,
+            MoveRight => MOVE_RIGHT,
+            MoveUp => MOVE_UP,
+            MoveDown => MOVE_DOWN,
+            MoveForward => MOVE_FORWARD,
+            MoveBackward => MOVE_BACKWARD,
+            PitchUp => PITCH_UP,
+            PitchDown => PITCH_DOWN,
+            YawLeft => YAW_LEFT,
+            YawRight => YAW_RIGHT,
+            RollClockwise => ROLL_CLOCKWISE,
+            RollCounterClockwise => ROLL_COUNTERCLOCKWISE,
+            NoMovement => NO_MOVEMENT,
+        };
+
+        CameraMovement {
+            total: self.total | move_to
+        }
+    }
+
+    /// Remove camera movement if it is present in the compound camera movement.
+    /// If the camera movement is not present in the compound camera movement, 
+    /// nothing changes.
+    #[inline]
+    pub fn subtract(self, movement: SimpleCameraMovement) -> CameraMovement {
+        use SimpleCameraMovement::*;
+        let move_to = match movement {
+            MoveLeft => MOVE_LEFT,
+            MoveRight => MOVE_RIGHT,
+            MoveUp => MOVE_UP,
+            MoveDown => MOVE_DOWN,
+            MoveForward => MOVE_FORWARD,
+            MoveBackward => MOVE_BACKWARD,
+            PitchUp => PITCH_UP,
+            PitchDown => PITCH_DOWN,
+            YawLeft => YAW_LEFT,
+            YawRight => YAW_RIGHT,
+            RollClockwise => ROLL_CLOCKWISE,
+            RollCounterClockwise => ROLL_COUNTERCLOCKWISE,
+            NoMovement => NO_MOVEMENT,
+        };
+
+        CameraMovement {
+            total: self.total ^ move_to
+        } 
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct CameraSpecification<S> {
     near: S,
@@ -97,7 +196,7 @@ pub struct Camera<S> {
     forward: Vector4<S>,
     right: Vector4<S>,
     up: Vector4<S>,
-    pub axis: Quaternion<S>,
+    axis: Quaternion<S>,
 
     // Camera matrices.
     pub proj_mat: Matrix4<S>,
@@ -202,6 +301,63 @@ impl<S> Camera<S> where S: gdmath::ScalarFloat {
         let zero = S::zero();
         let one = S::one();
         Vector3::new(zero, zero, -one)
+    }
+
+    /// Get the camera's axis or rotation.
+    #[inline]
+    pub fn axis(&self) -> Quaternion<S> {
+        self.axis
+    }
+
+    /// Update the camera position and attitude based on the input camera movements.
+    /// All movements are updated in the camera's coordinate system.
+    #[inline]
+    pub fn update_movement(&mut self, movement: CameraMovement, elapsed_seconds: S) {
+        let mut delta_position = gdmath::vec3((S::zero(), S::zero(), S::zero()));
+        if movement.total & MOVE_LEFT != 0 {
+            delta_position.x -= self.speed * elapsed_seconds;
+        }
+        if movement.total & MOVE_RIGHT != 0 {
+            delta_position.x += self.speed * elapsed_seconds;
+        }
+        if movement.total & MOVE_UP != 0 {
+            delta_position.y -= self.speed * elapsed_seconds;
+        }
+        if movement.total & MOVE_DOWN != 0 {
+            delta_position.y += self.speed * elapsed_seconds;
+        }
+        if movement.total & MOVE_FORWARD != 0 {
+            // We subtract along z-axis to move forward because the
+            // forward axis is the (-z) direction in camera space.
+            delta_position.z -= self.speed * elapsed_seconds;
+        }
+        if movement.total & MOVE_BACKWARD != 0 {
+            // We add along the z-axis to move backward because the
+            // forward axis is the (-z) direction in camera space.
+            delta_position.z += self.speed * elapsed_seconds;
+        }
+
+        let mut delta_attitude = CameraAttitude::new(S::zero(), S::zero(), S::zero());
+        if movement.total & PITCH_UP != 0 {
+            delta_attitude.pitch += self.yaw_speed * elapsed_seconds;
+        }
+        if movement.total & PITCH_DOWN != 0 {
+            delta_attitude.pitch -= self.yaw_speed * elapsed_seconds;
+        }
+        if movement.total & YAW_LEFT != 0 {
+            delta_attitude.yaw += self.yaw_speed * elapsed_seconds;
+        }
+        if movement.total & YAW_RIGHT != 0 {
+            delta_attitude.yaw -= self.yaw_speed * elapsed_seconds;
+        }
+        if movement.total & ROLL_CLOCKWISE != 0 {
+            delta_attitude.roll += self.yaw_speed * elapsed_seconds;
+        }
+        if movement.total & ROLL_COUNTERCLOCKWISE != 0 {
+            delta_attitude.roll -= self.yaw_speed * elapsed_seconds;
+        }
+
+        self.update(delta_position, delta_attitude);
     }
 
     /// Update the camera viewport dimensions in case the viewport dimensions have changed.
