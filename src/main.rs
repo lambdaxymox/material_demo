@@ -33,6 +33,7 @@ use gdmath::{
     Storage,
     Vector3,
     One,
+    Zero,
 };
 use glfw::{
     Action, 
@@ -466,21 +467,15 @@ fn process_input(context: &mut OpenGLContext) -> CameraMovement {
 }
 
 fn main() {
-    /*
-    let mesh = create_mesh();
-    let model_mat = Matrix4::new(
-        1.0 / 500.0, 0.0,        0.0,        0.0, 
-        0.0,        1.0 / 500.0, 0.0,        0.0, 
-        0.0,        0.0,        1.0 / 500.0, 0.0, 
-        0.0,        0.0,        0.0,        1.0 / 500.0
-    );
-    */
+    //let mesh = create_mesh();
+    //let mesh_model_mat = Matrix4::from_scale(1.0 / 100.0);
     let mesh = create_box_mesh();
     let light_mesh = create_box_mesh();
     init_logger("opengl_demo.log");
     info!("BEGIN LOG");
     let mut camera = create_camera(SCREEN_WIDTH, SCREEN_HEIGHT);
     let light = create_light();
+    let center_world = Vector3::<f32>::zero();
     let light_position_world: Vector3<f32> = Vector3::new(1.2, 1.0, 2.0);
     let material = material::material_table()["jade"];
     let mut context = init_gl(SCREEN_WIDTH, SCREEN_HEIGHT);

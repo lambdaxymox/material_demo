@@ -1,6 +1,7 @@
 use gdmath;
 use gdmath::{
     Degrees,
+    Zero,
     Vector3,
     Vector4,
     Matrix4, 
@@ -345,7 +346,7 @@ impl<S> Camera<S> where S: gdmath::ScalarFloat {
     /// All movements are updated in the camera's coordinate system.
     #[inline]
     pub fn update_movement(&mut self, movement: CameraMovement, elapsed_seconds: S) {
-        let mut delta_position = gdmath::vec3((S::zero(), S::zero(), S::zero()));
+        let mut delta_position = Vector3::zero();
         if movement.total & MOVE_LEFT != 0 {
             delta_position.x -= self.movement_speed * elapsed_seconds;
         }
