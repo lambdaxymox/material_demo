@@ -44,6 +44,12 @@ pub enum SimpleCameraMovement {
     NoMovement,
 }
 
+impl fmt::Display for SimpleCameraMovement {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(&self, f)
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct CameraMovement {
     total: u16,
