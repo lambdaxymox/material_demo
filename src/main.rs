@@ -158,7 +158,7 @@ impl LightKinematics {
             radius_of_oscillation: radius_of_oscillation,
             position: position,
             radial_unit_velocity: radial_unit_velocity,
-            orbital_axis: orbital_axis,
+            orbital_axis: orbital_axis.normalize(),
         }
     }
 
