@@ -138,6 +138,7 @@ struct LightKinematics {
     radius_of_oscillation: f32,
     position: Vector3<f32>,
     radial_unit_velocity: f32,
+    orbital_axis: Vector3<f32>,
 }
 
 impl LightKinematics {
@@ -145,7 +146,8 @@ impl LightKinematics {
         scene_center: Vector3<f32>, 
         radial_speed: f32, 
         center_of_oscillation: Vector3<f32>, 
-        radius_of_oscillation: f32) -> LightKinematics {
+        radius_of_oscillation: f32,
+        orbital_axis: Vector3<f32>) -> LightKinematics {
         
         let radial_unit_velocity = 1.0;
         let position = center_of_oscillation;
@@ -156,6 +158,7 @@ impl LightKinematics {
             radius_of_oscillation: radius_of_oscillation,
             position: position,
             radial_unit_velocity: radial_unit_velocity,
+            orbital_axis: orbital_axis,
         }
     }
 
@@ -180,7 +183,11 @@ impl LightKinematics {
             self.radial_unit_velocity = -1.0;
         }
     
-        self.position = distance_from_scene_center * radial_vector; 
+        self.position = distance_from_scene_center * radial_vector;
+    }
+
+    fn model_mat(&self) -> Matrix4<f32> {
+        Matrix4::from_translation(self.position)
     }
 }
 
@@ -530,11 +537,13 @@ fn main() {
     let scene_center_world = Vector3::<f32>::zero();
     let mut camera = create_camera(SCREEN_WIDTH, SCREEN_HEIGHT);
     let light = create_light();
+    let light_orbital_axis = Vector3::new(1.0, 1.0, 1.0).normalize();
     let light_radial_speed = 3.0;
     let light_center_of_oscillation = Vector3::new(1.2, 1.0, 2.0);
     let light_radius_of_oscillation = 1.25;
     let mut light_kinematics = LightKinematics::new(
-        scene_center_world, light_radial_speed, light_center_of_oscillation, light_radius_of_oscillation
+        scene_center_world, light_radial_speed, 
+        light_center_of_oscillation, light_radius_of_oscillation, light_orbital_axis
     );
     let material = material::material_table()["jade"];
     let mut context = init_gl(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -553,7 +562,7 @@ fn main() {
     send_to_gpu_uniforms_material(mesh_shader, &material);
 
     // Load the lighting cube model.
-    let light_model_mat = Matrix4::from_translation(light_kinematics.position()) * Matrix4::from_scale(0.2);
+    let light_model_mat = light_kinematics.model_mat() * Matrix4::from_scale(0.2);
     let light_shader_source = create_light_shader_source();
     let light_shader = send_to_gpu_shaders(&mut context, light_shader_source);
     let (
@@ -587,7 +596,7 @@ fn main() {
         send_to_gpu_uniforms_camera(light_shader, &camera);
         send_to_gpu_uniforms_light(mesh_shader, &light, light_kinematics.position());
 
-        let light_model_mat = Matrix4::from_translation(light_kinematics.position()) * Matrix4::from_scale(0.2);
+        let light_model_mat = light_kinematics.model_mat() * Matrix4::from_scale(0.2);
         send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
 
         unsafe {
