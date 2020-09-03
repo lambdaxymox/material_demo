@@ -55,7 +55,7 @@ use std::ptr;
 
 
 // Default value for the color buffer.
-const CLEAR_COLOR: [f32; 4] = [0.1_f32, 0.1_f32, 0.1_f32, 1.0_f32];
+const CLEAR_COLOR: [f32; 4] = [0.2_f32, 0.2_f32, 0.2_f32, 1.0_f32];
 // Default value for the depth buffer.
 const CLEAR_DEPTH: [f32; 4] = [1.0_f32, 1.0_f32, 1.0_f32, 1.0_f32];
 
@@ -128,6 +128,13 @@ fn create_light() -> PointLight<f32> {
     let specular = Vector3::new(1.0, 1.0, 1.0);
     
     PointLight::new(ambient, diffuse, specular)
+}
+
+fn update_light_position(light_position_world: &mut Vector3<f32>) {
+    let scene_center_world = Vector3::<f32>::zero();
+    let light_radial_velocity = 20.0;
+
+    light_position_world;
 }
 
 fn send_to_gpu_uniforms_mesh(shader: GLuint, model_mat: &Matrix4<f32>) {
@@ -468,15 +475,14 @@ fn process_input(context: &mut OpenGLContext) -> CameraMovement {
 
 fn main() {
     //let mesh = create_mesh();
-    //let mesh_model_mat = Matrix4::from_scale(1.0 / 100.0);
+    //let mesh_model_mat = Matrix4::from_scale(1.0 / 50.0);
     let mesh = create_box_mesh();
     let light_mesh = create_box_mesh();
     init_logger("opengl_demo.log");
     info!("BEGIN LOG");
     let mut camera = create_camera(SCREEN_WIDTH, SCREEN_HEIGHT);
     let light = create_light();
-    let center_world = Vector3::<f32>::zero();
-    let light_position_world: Vector3<f32> = Vector3::new(1.2, 1.0, 2.0);
+    let mut light_position_world: Vector3<f32> = Vector3::new(1.2, 1.0, 2.0);
     let material = material::material_table()["jade"];
     let mut context = init_gl(SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -521,6 +527,7 @@ fn main() {
             framebuffer_size_callback(&mut context, width as u32, height as u32);
         }
 
+        update_light_position(&mut light_position_world);
         let delta_movement = process_input(&mut context);
         camera.update_movement(delta_movement, elapsed_seconds as f32);
         send_to_gpu_uniforms_camera(mesh_shader, &camera);
