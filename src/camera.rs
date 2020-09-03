@@ -222,8 +222,8 @@ pub struct Camera<S> {
     pub aspect: S,
 
     // Camera kinematics.
-    pub speed: S,
-    pub yaw_speed: S,
+    pub movement_speed: S,
+    pub rotation_speed: S,
     position: Vector3<S>,
     forward: Vector4<S>,
     right: Vector4<S>,
@@ -243,8 +243,8 @@ impl<S> fmt::Display for Camera<S> where S: ScalarFloat + fmt::Display {
         output.push_str(&format!("near: {}\n", self.near));
         output.push_str(&format!("far: {}\n", self.far));
         output.push_str(&format!("aspect: {}\n", self.aspect));
-        output.push_str(&format!("speed: {}\n", self.speed));
-        output.push_str(&format!("yaw_speed: {}\n", self.yaw_speed));
+        output.push_str(&format!("speed: {}\n", self.movement_speed));
+        output.push_str(&format!("yaw_speed: {}\n", self.rotation_speed));
         output.push_str(&format!("position: {}\n", self.position));
         output.push_str(&format!("forward: {}\n", self.forward));
         output.push_str(&format!("right: {}\n", self.right));
@@ -272,8 +272,8 @@ impl<S> Camera<S> where S: gdmath::ScalarFloat {
             fovy: spec.fovy,
             aspect: spec.aspect,
 
-            speed: kinematics.speed,
-            yaw_speed: kinematics.yaw_speed,
+            movement_speed: kinematics.speed,
+            rotation_speed: kinematics.yaw_speed,
             position: kinematics.position,
             forward: kinematics.forward,
             right: kinematics.right,
@@ -347,46 +347,46 @@ impl<S> Camera<S> where S: gdmath::ScalarFloat {
     pub fn update_movement(&mut self, movement: CameraMovement, elapsed_seconds: S) {
         let mut delta_position = gdmath::vec3((S::zero(), S::zero(), S::zero()));
         if movement.total & MOVE_LEFT != 0 {
-            delta_position.x -= self.speed * elapsed_seconds;
+            delta_position.x -= self.movement_speed * elapsed_seconds;
         }
         if movement.total & MOVE_RIGHT != 0 {
-            delta_position.x += self.speed * elapsed_seconds;
+            delta_position.x += self.movement_speed * elapsed_seconds;
         }
         if movement.total & MOVE_UP != 0 {
-            delta_position.y -= self.speed * elapsed_seconds;
+            delta_position.y -= self.movement_speed * elapsed_seconds;
         }
         if movement.total & MOVE_DOWN != 0 {
-            delta_position.y += self.speed * elapsed_seconds;
+            delta_position.y += self.movement_speed * elapsed_seconds;
         }
         if movement.total & MOVE_FORWARD != 0 {
             // We subtract along z-axis to move forward because the
             // forward axis is the (-z) direction in camera space.
-            delta_position.z -= self.speed * elapsed_seconds;
+            delta_position.z -= self.movement_speed * elapsed_seconds;
         }
         if movement.total & MOVE_BACKWARD != 0 {
             // We add along the z-axis to move backward because the
             // forward axis is the (-z) direction in camera space.
-            delta_position.z += self.speed * elapsed_seconds;
+            delta_position.z += self.movement_speed * elapsed_seconds;
         }
 
         let mut delta_attitude = CameraAttitude::new(S::zero(), S::zero(), S::zero());
         if movement.total & PITCH_UP != 0 {
-            delta_attitude.pitch += self.yaw_speed * elapsed_seconds;
+            delta_attitude.pitch += self.rotation_speed * elapsed_seconds;
         }
         if movement.total & PITCH_DOWN != 0 {
-            delta_attitude.pitch -= self.yaw_speed * elapsed_seconds;
+            delta_attitude.pitch -= self.rotation_speed * elapsed_seconds;
         }
         if movement.total & YAW_LEFT != 0 {
-            delta_attitude.yaw += self.yaw_speed * elapsed_seconds;
+            delta_attitude.yaw += self.rotation_speed * elapsed_seconds;
         }
         if movement.total & YAW_RIGHT != 0 {
-            delta_attitude.yaw -= self.yaw_speed * elapsed_seconds;
+            delta_attitude.yaw -= self.rotation_speed * elapsed_seconds;
         }
         if movement.total & ROLL_CLOCKWISE != 0 {
-            delta_attitude.roll += self.yaw_speed * elapsed_seconds;
+            delta_attitude.roll += self.rotation_speed * elapsed_seconds;
         }
         if movement.total & ROLL_COUNTERCLOCKWISE != 0 {
-            delta_attitude.roll -= self.yaw_speed * elapsed_seconds;
+            delta_attitude.roll -= self.rotation_speed * elapsed_seconds;
         }
 
         self.update(delta_position, delta_attitude);
