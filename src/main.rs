@@ -279,6 +279,12 @@ fn send_to_gpu_uniforms_camera(shader: GLuint, camera: &Camera<f32>) {
     }
 }
 
+/// Send the uniforms for the lighting data to the GPU for the mesh.
+/// Note that in order to render multiple lights in the shader, we define an array
+/// of structs. In OpenGL, each elementary member of a struct is considered to be a uniform variable,
+/// and each struct is a struct of uniforms. Consequently, if every element of an array of struct uniforms
+/// is not used in the shader, OpenGL will optimize those uniform locations out at runtime. This
+/// will cause OpenGL to return a `GL_INVALID_VALUE` on a call to `glGetUniformLocation`.
 fn send_to_gpu_uniforms_light(shader: GLuint, lights: &[Light; 3]) {
     let light_position_world_loc = unsafe {
         gl::GetUniformLocation(shader, backend::gl_str("lights[0].position_world").as_ptr())
