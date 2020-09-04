@@ -16,8 +16,8 @@ struct FragData {
     vec3 normal_eye;
 };
 
-in layout (location = 0) vec3 v_pos;
-in layout (location = 1) vec3 v_norm;
+layout(location = 0) in vec3 v_pos;
+layout(location = 1) in vec3 v_norm;
 
 // The coordinate transformation placing an object from model 
 // space to world space.
