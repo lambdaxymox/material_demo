@@ -279,7 +279,7 @@ fn send_to_gpu_uniforms_camera(shader: GLuint, camera: &Camera<f32>) {
     }
 }
 
-fn send_to_gpu_uniforms_light(shader: GLuint, light: &PointLight<f32>, position_world: Vector3<f32>) {
+fn send_to_gpu_uniforms_light(shader: GLuint, lights: &[Light; 3]) {
     let light_position_world_loc = unsafe {
         gl::GetUniformLocation(shader, backend::gl_str("lights[0].position_world").as_ptr())
     };
@@ -299,10 +299,10 @@ fn send_to_gpu_uniforms_light(shader: GLuint, light: &PointLight<f32>, position_
 
     unsafe {
         gl::UseProgram(shader);
-        gl::Uniform3fv(light_position_world_loc, 1, position_world.as_ptr());
-        gl::Uniform3fv(light_ambient_loc, 1, light.ambient.as_ptr());
-        gl::Uniform3fv(light_diffuse_loc, 1, light.diffuse.as_ptr());
-        gl::Uniform3fv(light_specular_loc, 1, light.specular.as_ptr());
+        gl::Uniform3fv(light_position_world_loc, 1, lights[0].kinematics.position().as_ptr());
+        gl::Uniform3fv(light_ambient_loc, 1, lights[0].light.ambient.as_ptr());
+        gl::Uniform3fv(light_diffuse_loc, 1, lights[0].light.diffuse.as_ptr());
+        gl::Uniform3fv(light_specular_loc, 1, lights[0].light.specular.as_ptr());
     }
 }
 
@@ -609,18 +609,14 @@ fn main() {
         mesh_v_norm_vbo) = send_to_gpu_mesh(mesh_shader, &mesh);
     send_to_gpu_uniforms_mesh(mesh_shader, &mesh_model_mat);
     send_to_gpu_uniforms_camera(mesh_shader, &camera);
-    send_to_gpu_uniforms_light(mesh_shader, &lights[0].light, lights[0].kinematics.position());
     send_to_gpu_uniforms_material(mesh_shader, &material);
 
     // Load the lighting cube model.
-    let light_model_mat = lights[0].kinematics.model_mat() * Matrix4::from_scale(0.2);
     let light_shader_source = create_light_shader_source();
     let light_shader = send_to_gpu_shaders(&mut context, light_shader_source);
     let (
         light_vao,
         light_v_pos_vbo) = send_to_gpu_light_mesh(light_shader, &light_mesh);
-    send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
-    send_to_gpu_uniforms_camera(light_shader, &camera);
 
     unsafe {
         gl::Enable(gl::DEPTH_TEST);
@@ -647,7 +643,7 @@ fn main() {
         camera.update_movement(delta_movement, elapsed_seconds as f32);
         send_to_gpu_uniforms_camera(mesh_shader, &camera);
         send_to_gpu_uniforms_camera(light_shader, &camera);
-        send_to_gpu_uniforms_light(mesh_shader, &lights[0].light, lights[0].kinematics.position());
+        send_to_gpu_uniforms_light(mesh_shader, &lights);
         // Illuminate the cube.
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
