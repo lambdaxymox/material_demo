@@ -169,7 +169,7 @@ fn create_lights(scene_center_world: Vector3<f32>) -> [Light; 3] {
     let orbital_axis_2 = Vector3::new(1.0, 0.0, 0.0).normalize();
     let orbital_speed_2 = 0.5;
     let radial_speed_2 = 3.0;
-    let center_of_oscillation_2 = Vector3::new(0.0, 10.0, 10.0);
+    let center_of_oscillation_2 = Vector3::new(0.0, 5.0, 5.0);
     let radius_of_oscillation_2 = 0.25;
     let kinematics_2= LightKinematics::new(
         scene_center_world, radial_speed_2, 
@@ -596,7 +596,7 @@ fn main() {
     let scene_center_world = Vector3::<f32>::zero();
     let mut camera = create_camera(SCREEN_WIDTH, SCREEN_HEIGHT);
     let mut lights: [Light; 3] = create_lights(scene_center_world);
-    let material = material::material_table()["jade"];
+    let material = material::material_table()["emerald"];
     let mut context = init_gl(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     //  Load the model.
@@ -647,10 +647,8 @@ fn main() {
         camera.update_movement(delta_movement, elapsed_seconds as f32);
         send_to_gpu_uniforms_camera(mesh_shader, &camera);
         send_to_gpu_uniforms_camera(light_shader, &camera);
-        
-        send_to_gpu_uniforms_light(mesh_shader, &lights[0].light, lights[0].kinematics.position());
-        let light_model_mat = lights[0].kinematics.model_mat() * Matrix4::from_scale(0.2);
-        send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
+
+        // Illuminate the cube.
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
             gl::ClearBufferfv(gl::DEPTH, 0, &CLEAR_DEPTH[0] as *const GLfloat);
@@ -658,28 +656,31 @@ fn main() {
             gl::UseProgram(mesh_shader);
             gl::BindVertexArray(mesh_vao);
             gl::DrawArrays(gl::TRIANGLES, 0, mesh.len() as i32);
+        }
+        
+        // Render the lights.
+        send_to_gpu_uniforms_light(mesh_shader, &lights[0].light, lights[0].kinematics.position());
+        let light_model_mat = lights[0].kinematics.model_mat() * Matrix4::from_scale(0.2);
+        send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
+        unsafe {
             gl::UseProgram(light_shader);
             gl::BindVertexArray(light_vao);
             gl::DrawArrays(gl::TRIANGLES, 0, light_mesh.len() as i32);
         }
+        
         send_to_gpu_uniforms_light(mesh_shader, &lights[1].light, lights[1].kinematics.position());
         let light_model_mat = lights[1].kinematics.model_mat() * Matrix4::from_scale(0.2);
         send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
         unsafe {
-            gl::UseProgram(mesh_shader);
-            gl::BindVertexArray(mesh_vao);
-            gl::DrawArrays(gl::TRIANGLES, 0, mesh.len() as i32);
             gl::UseProgram(light_shader);
             gl::BindVertexArray(light_vao);
             gl::DrawArrays(gl::TRIANGLES, 0, light_mesh.len() as i32);
         }
+        
         send_to_gpu_uniforms_light(mesh_shader, &lights[2].light, lights[2].kinematics.position());
         let light_model_mat = lights[2].kinematics.model_mat() * Matrix4::from_scale(0.2);
         send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
         unsafe {
-            gl::UseProgram(mesh_shader);
-            gl::BindVertexArray(mesh_vao);
-            gl::DrawArrays(gl::TRIANGLES, 0, mesh.len() as i32);
             gl::UseProgram(light_shader);
             gl::BindVertexArray(light_vao);
             gl::DrawArrays(gl::TRIANGLES, 0, light_mesh.len() as i32);
