@@ -136,7 +136,7 @@ fn create_lights(scene_center_world: Vector3<f32>) -> [Light; 3] {
     let point_light_0 = PointLight::new(ambient_0, diffuse_0, specular_0);
     let orbital_axis_0 = Vector3::new(0.0, 1.0, 1.0).normalize();
     let orbital_speed_0 = 3.14159265;
-    let radial_speed_0 = 4.0;
+    let radial_speed_0 = 0.0;
     let center_of_oscillation_0 = Vector3::new(3.0, 0.0, 0.0);
     let radius_of_oscillation_0 = 0.4;
     let kinematics_0= LightKinematics::new(
@@ -152,7 +152,7 @@ fn create_lights(scene_center_world: Vector3<f32>) -> [Light; 3] {
     let point_light_1 = PointLight::new(ambient_1, diffuse_1, specular_1);
     let orbital_axis_1 = Vector3::new(0.0, 0.0, 1.0).normalize();
     let orbital_speed_1 = 1.5;
-    let radial_speed_1 = 2.0;
+    let radial_speed_1 = 0.0;
     let center_of_oscillation_1 = Vector3::new(0.0, 6.0, 0.0);
     let radius_of_oscillation_1 = 1.0;
     let kinematics_1= LightKinematics::new(
@@ -168,7 +168,7 @@ fn create_lights(scene_center_world: Vector3<f32>) -> [Light; 3] {
     let point_light_2 = PointLight::new(ambient_2, diffuse_2, specular_2);
     let orbital_axis_2 = Vector3::new(1.0, 0.0, 0.0).normalize();
     let orbital_speed_2 = 0.5;
-    let radial_speed_2 = 3.0;
+    let radial_speed_2 = 0.0;
     let center_of_oscillation_2 = Vector3::new(0.0, 5.0, 5.0);
     let radius_of_oscillation_2 = 0.25;
     let kinematics_2= LightKinematics::new(
@@ -281,19 +281,19 @@ fn send_to_gpu_uniforms_camera(shader: GLuint, camera: &Camera<f32>) {
 
 fn send_to_gpu_uniforms_light(shader: GLuint, light: &PointLight<f32>, position_world: Vector3<f32>) {
     let light_position_world_loc = unsafe {
-        gl::GetUniformLocation(shader, backend::gl_str("light.position_world").as_ptr())
+        gl::GetUniformLocation(shader, backend::gl_str("lights[0].position_world").as_ptr())
     };
     debug_assert!(light_position_world_loc > -1);
     let light_ambient_loc = unsafe {
-        gl::GetUniformLocation(shader, backend::gl_str("light.ambient").as_ptr())
+        gl::GetUniformLocation(shader, backend::gl_str("lights[0].ambient").as_ptr())
     };
     debug_assert!(light_ambient_loc > -1);
     let light_diffuse_loc = unsafe {
-        gl::GetUniformLocation(shader, backend::gl_str("light.diffuse").as_ptr())
+        gl::GetUniformLocation(shader, backend::gl_str("lights[0].diffuse").as_ptr())
     };
     debug_assert!(light_diffuse_loc > -1);
     let light_specular_loc = unsafe { 
-        gl::GetUniformLocation(shader, backend::gl_str("light.specular").as_ptr())
+        gl::GetUniformLocation(shader, backend::gl_str("lights[0].specular").as_ptr())
     };
     debug_assert!(light_specular_loc > -1);
 
@@ -596,7 +596,7 @@ fn main() {
     let scene_center_world = Vector3::<f32>::zero();
     let mut camera = create_camera(SCREEN_WIDTH, SCREEN_HEIGHT);
     let mut lights: [Light; 3] = create_lights(scene_center_world);
-    let material = material::material_table()["emerald"];
+    let material = material::material_table()["jade"];
     let mut context = init_gl(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     //  Load the model.
