@@ -647,7 +647,7 @@ fn main() {
         camera.update_movement(delta_movement, elapsed_seconds as f32);
         send_to_gpu_uniforms_camera(mesh_shader, &camera);
         send_to_gpu_uniforms_camera(light_shader, &camera);
-
+        send_to_gpu_uniforms_light(mesh_shader, &lights[0].light, lights[0].kinematics.position());
         // Illuminate the cube.
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, &CLEAR_COLOR[0] as *const GLfloat);
@@ -659,7 +659,6 @@ fn main() {
         }
         
         // Render the lights.
-        send_to_gpu_uniforms_light(mesh_shader, &lights[0].light, lights[0].kinematics.position());
         let light_model_mat = lights[0].kinematics.model_mat() * Matrix4::from_scale(0.2);
         send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
         unsafe {
@@ -667,8 +666,7 @@ fn main() {
             gl::BindVertexArray(light_vao);
             gl::DrawArrays(gl::TRIANGLES, 0, light_mesh.len() as i32);
         }
-        
-        send_to_gpu_uniforms_light(mesh_shader, &lights[1].light, lights[1].kinematics.position());
+    
         let light_model_mat = lights[1].kinematics.model_mat() * Matrix4::from_scale(0.2);
         send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
         unsafe {
@@ -677,7 +675,6 @@ fn main() {
             gl::DrawArrays(gl::TRIANGLES, 0, light_mesh.len() as i32);
         }
         
-        send_to_gpu_uniforms_light(mesh_shader, &lights[2].light, lights[2].kinematics.position());
         let light_model_mat = lights[2].kinematics.model_mat() * Matrix4::from_scale(0.2);
         send_to_gpu_uniforms_mesh(light_shader, &light_model_mat);
         unsafe {
