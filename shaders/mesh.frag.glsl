@@ -52,23 +52,27 @@ out vec4 frag_color;
 
 
 void main() {
-    // Calculate the ambient part of the lighting model.
-    vec3 frag_ambient = lights[0].ambient * material.ambient;
+    vec3 frag_result = vec3(0.0, 0.0, 0.0);
+    for (int i = 0; i < num_lights; i++) {
+        // Calculate the ambient part of the lighting model.
+        vec3 frag_ambient = lights[i].ambient * material.ambient;
 
-    // Calculate the diffuse part of the lighting model.
-    vec3 norm_eye = normalize(vertex_data.normal_eye);
-    vec3 light_position_eye = vec3(camera.view_mat * vec4(lights[0].position_world, 1.0));
-    vec3 light_dir_eye = normalize(light_position_eye - vertex_data.position_eye);
-    float diff = max(dot(norm_eye, light_dir_eye), 0.0);
-    vec3 frag_diffuse = lights[0].diffuse * (diff * material.diffuse);
+        // Calculate the diffuse part of the lighting model.
+        vec3 norm_eye = normalize(vertex_data.normal_eye);
+        vec3 light_position_eye = vec3(camera.view_mat * vec4(lights[i].position_world, 1.0));
+        vec3 light_dir_eye = normalize(light_position_eye - vertex_data.position_eye);
+        float diff = max(dot(norm_eye, light_dir_eye), 0.0);
+        vec3 frag_diffuse = lights[i].diffuse * (diff * material.diffuse);
 
-    // Calculate the specular part of the lighting model.
-    vec3 view_dir_eye = normalize(-vertex_data.position_eye);
-    vec3 half_vec_eye = normalize(view_dir_eye + light_dir_eye);
-    float dot_specular = max(dot(half_vec_eye, norm_eye), 0.0);
-    float specular_factor = pow(dot_specular, material.specular_exponent);
-    vec3 frag_specular = lights[0].specular * material.specular * specular_factor;
-    
-    vec3 frag_result = frag_ambient + frag_diffuse + frag_specular;
+        // Calculate the specular part of the lighting model.
+        vec3 view_dir_eye = normalize(-vertex_data.position_eye);
+        vec3 half_vec_eye = normalize(view_dir_eye + light_dir_eye);
+        float dot_specular = max(dot(half_vec_eye, norm_eye), 0.0);
+        float specular_factor = pow(dot_specular, material.specular_exponent);
+        vec3 frag_specular = lights[i].specular * material.specular * specular_factor;
+
+        frag_result += frag_ambient + frag_diffuse + frag_specular;
+    }
+
     frag_color = vec4(frag_result, 1.0);
 }
