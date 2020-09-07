@@ -7,6 +7,7 @@ use gdmath::{
     Matrix4, 
     Quaternion,
     ScalarFloat,
+    InvertibleSquareMatrix,
 };
 use std::fmt;
 use std::ops;
