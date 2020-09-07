@@ -236,8 +236,8 @@ impl LightKinematics {
             self.radial_unit_velocity = -1.0;
         }
     
-        let q = Quaternion::from_axis_rad(
-            Radians(self.orbital_speed * elapsed_seconds), self.orbital_axis
+        let q = Quaternion::from_axis_angle(
+            self.orbital_axis, Radians(self.orbital_speed * elapsed_seconds)
         );
         let rot_mat = Matrix4::from(q);
         let new_position = rot_mat * gdmath::vec4((distance_from_scene_center * radial_vector, 1.0));

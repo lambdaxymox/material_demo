@@ -413,16 +413,16 @@ impl<S> Camera<S> where S: gdmath::ScalarFloat {
     #[inline]
     pub fn update(&mut self, delta_position: Vector3<S>, delta_attitude: CameraAttitude<S>) {
         // Update the axis of rotation of the camera.
-        let q_yaw = Quaternion::from_axis_deg(
-            Degrees(delta_attitude.yaw), gdmath::vec3(self.up)
+        let q_yaw = Quaternion::from_axis_angle(
+            gdmath::vec3(self.up), Degrees(delta_attitude.yaw)
         );
         self.axis = q_yaw * self.axis;
-        let q_pitch = Quaternion::from_axis_deg(
-            Degrees(delta_attitude.pitch), gdmath::vec3(self.right)
+        let q_pitch = Quaternion::from_axis_angle(
+            gdmath::vec3(self.right), Degrees(delta_attitude.pitch)
         );
         self.axis = q_pitch * self.axis;
-        let q_roll = Quaternion::from_axis_deg(
-            Degrees(delta_attitude.roll), gdmath::vec3(self.forward)
+        let q_roll = Quaternion::from_axis_angle(
+            gdmath::vec3(self.forward), Degrees(delta_attitude.roll)
         );
         self.axis = q_roll * self.axis;
 
