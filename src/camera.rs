@@ -1,13 +1,13 @@
-use gdmath;
-use gdmath::{
+use cglinalg::{
     Degrees,
-    Zero,
+    AdditiveIdentity,
     Vector3,
     Vector4,
     Matrix4, 
     Quaternion,
     ScalarFloat,
     InvertibleSquareMatrix,
+    Unit,
 };
 use std::fmt;
 use std::ops;
@@ -266,11 +266,11 @@ impl<S> fmt::Display for Camera<S> where S: ScalarFloat + fmt::Display {
     }
 }
 
-impl<S> Camera<S> where S: gdmath::ScalarFloat {
+impl<S> Camera<S> where S: cglinalg::ScalarFloat {
     /// Construct a new camera.
     pub fn new(spec: CameraSpecification<S>, kinematics: CameraKinematics<S>) -> Camera<S> {
-        let proj_mat = gdmath::perspective((spec.fovy, spec.aspect, spec.near, spec.far));
-        let trans_mat = Matrix4::from_translation(-kinematics.position);
+        let proj_mat = Matrix4::from_perspective_fov(spec.fovy, spec.aspect, spec.near, spec.far);
+        let trans_mat = Matrix4::from_affine_translation(-kinematics.position);
         let rot_mat = Matrix4::from(kinematics.axis);
         let view_mat = rot_mat * trans_mat;
 
@@ -403,43 +403,46 @@ impl<S> Camera<S> where S: gdmath::ScalarFloat {
     /// Update the camera viewport dimensions in case the viewport dimensions have changed.
     #[inline]
     pub fn update_viewport(&mut self, width: u32, height: u32) {
-        let width_float = gdmath::num_traits::cast::<u32, S>(width).unwrap();
-        let height_float = gdmath::num_traits::cast::<u32, S>(height).unwrap();
+        let width_float = cglinalg::num_traits::cast::<u32, S>(width).unwrap();
+        let height_float = cglinalg::num_traits::cast::<u32, S>(height).unwrap();
         self.aspect = width_float / height_float;
-        self.proj_mat = gdmath::perspective((self.fovy, self.aspect, self.near, self.far));
+        self.proj_mat = Matrix4::from_perspective_fov(self.fovy, self.aspect, self.near, self.far);
     }
 
     /// Update the camera position and attitude in world space.
     #[inline]
     pub fn update(&mut self, delta_position: Vector3<S>, delta_attitude: CameraAttitude<S>) {
         // Update the axis of rotation of the camera.
+        let axis_yaw = Unit::from_value(self.up.contract());
         let q_yaw = Quaternion::from_axis_angle(
-            gdmath::vec3(self.up), Degrees(delta_attitude.yaw)
+            &axis_yaw, Degrees(delta_attitude.yaw)
         );
         self.axis = q_yaw * self.axis;
+        let axis_pitch = Unit::from_value(self.right.contract());
         let q_pitch = Quaternion::from_axis_angle(
-            gdmath::vec3(self.right), Degrees(delta_attitude.pitch)
+            &axis_pitch, Degrees(delta_attitude.pitch)
         );
         self.axis = q_pitch * self.axis;
+        let axis_roll = Unit::from_value(self.forward.contract());
         let q_roll = Quaternion::from_axis_angle(
-            gdmath::vec3(self.forward), Degrees(delta_attitude.roll)
+            &axis_roll, Degrees(delta_attitude.roll)
         );
         self.axis = q_roll * self.axis;
 
         // Update the camera axes so we can rotate the camera about the new rotation axes.
         let zero = S::zero();
         let rot_mat_inv = Matrix4::from(self.axis);
-        self.forward = rot_mat_inv * gdmath::vec4((self.forward_axis_eye(), zero));
-        self.right   = rot_mat_inv * gdmath::vec4((self.right_axis_eye(), zero));
-        self.up      = rot_mat_inv * gdmath::vec4((self.up_axis_eye(), zero));
+        self.forward = rot_mat_inv * self.forward_axis_eye().expand(zero);
+        self.right   = rot_mat_inv * self.right_axis_eye().expand(zero);
+        self.up      = rot_mat_inv * self.up_axis_eye().expand(zero);
 
         // Update the camera position.
-        self.position += gdmath::vec3(self.forward) * -delta_position.z;
-        self.position += gdmath::vec3(self.up)      *  delta_position.y;
-        self.position += gdmath::vec3(self.right)   *  delta_position.x;
+        self.position += self.forward.contract() * -delta_position.z;
+        self.position += self.up.contract()      *  delta_position.y;
+        self.position += self.right.contract()   *  delta_position.x;
 
         // Update the camera matrices.
-        let trans_mat_inv = Matrix4::from_translation(self.position);
+        let trans_mat_inv = Matrix4::from_affine_translation(self.position);
         self.rot_mat = rot_mat_inv.inverse().unwrap();
         self.trans_mat = trans_mat_inv.inverse().unwrap();
         self.view_mat = self.rot_mat * self.trans_mat;

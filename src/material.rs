@@ -1,4 +1,4 @@
-use gdmath::{
+use cglinalg::{
     Vector3,
     ScalarFloat,
 };

@@ -1,7 +1,8 @@
-use gdmath::{
+use cglinalg::{
     Vector3,
     ScalarFloat,
 };
+
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct PointLight<S> {
