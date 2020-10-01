@@ -1,6 +1,6 @@
 use cglinalg::{
     Degrees,
-    AdditiveIdentity,
+    Zero,
     Vector3,
     Vector4,
     Matrix4, 
@@ -270,7 +270,7 @@ impl<S> Camera<S> where S: cglinalg::ScalarFloat {
     /// Construct a new camera.
     pub fn new(spec: CameraSpecification<S>, kinematics: CameraKinematics<S>) -> Camera<S> {
         let proj_mat = Matrix4::from_perspective_fov(spec.fovy, spec.aspect, spec.near, spec.far);
-        let trans_mat = Matrix4::from_affine_translation(-kinematics.position);
+        let trans_mat = Matrix4::from_affine_translation(&(-kinematics.position));
         let rot_mat = Matrix4::from(kinematics.axis);
         let view_mat = rot_mat * trans_mat;
 
@@ -442,7 +442,7 @@ impl<S> Camera<S> where S: cglinalg::ScalarFloat {
         self.position += self.right.contract()   *  delta_position.x;
 
         // Update the camera matrices.
-        let trans_mat_inv = Matrix4::from_affine_translation(self.position);
+        let trans_mat_inv = Matrix4::from_affine_translation(&self.position);
         self.rot_mat = rot_mat_inv.inverse().unwrap();
         self.trans_mat = trans_mat_inv.inverse().unwrap();
         self.view_mat = self.rot_mat * self.trans_mat;
