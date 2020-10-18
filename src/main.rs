@@ -72,13 +72,6 @@ const SCREEN_HEIGHT: u32 = 600;
 type PerspFovCamera<S> = Camera<S, PerspectiveFovProjection<S>, FreeKinematics<S>>;
 
 
-fn create_mesh() -> ObjMesh {
-    let buffer = include_bytes!("../assets/teapot.obj");
-    let mesh = mini_obj::load_from_memory(buffer).unwrap();
-
-    mesh
-}
-
 fn create_box_mesh() -> ObjMesh {
     let points: Vec<[f32; 3]> = vec![
         [-0.5, -0.5, -0.5], [ 0.5, -0.5, -0.5], [ 0.5,  0.5, -0.5],
