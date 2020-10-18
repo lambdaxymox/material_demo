@@ -646,8 +646,6 @@ fn process_input(context: &mut OpenGLContext) -> CameraMovement {
 }
 
 fn main() {
-    //let mesh = create_mesh();
-    //let mesh_model_mat = Matrix4::from_scale(1.0 / 50.0);
     let mesh = create_box_mesh();
     let light_mesh = create_box_mesh();
     init_logger("opengl_demo.log");
