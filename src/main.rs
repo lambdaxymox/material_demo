@@ -1,5 +1,6 @@
 extern crate glfw;
 extern crate cglinalg;
+extern crate cgperspective;
 extern crate log;
 extern crate file_logger;
 extern crate mini_obj;
@@ -10,18 +11,20 @@ mod gl {
 }
 
 mod backend;
-mod camera;
 mod light;
 mod material;
 
 use backend::{
     OpenGLContext,
 };
-use camera::{
+use cgperspective::{
     SimpleCameraMovement,
     CameraMovement,
-    CameraSpecification,
-    CameraKinematics,
+    PerspectiveFovSpec,
+    PerspectiveFovProjection,
+    FreeKinematicsSpec,
+    FreeKinematics,
+    CameraAttitudeSpec,
     Camera
 };
 use light::PointLight;
@@ -34,7 +37,6 @@ use cglinalg::{
     Radians,
     Array,
     Vector3,
-    Vector4,
     Identity,
     Zero,
     Unit,
@@ -65,6 +67,10 @@ const CLEAR_DEPTH: [f32; 4] = [1.0_f32, 1.0_f32, 1.0_f32, 1.0_f32];
 
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
+
+
+type PerspFovCamera<S> = Camera<S, PerspectiveFovProjection<S>, FreeKinematics<S>>;
+
 
 fn create_mesh() -> ObjMesh {
     let buffer = include_bytes!("../assets/teapot.obj");
@@ -107,23 +113,25 @@ fn create_box_mesh() -> ObjMesh {
     ObjMesh::new(points, tex_coords, normals)
 }
 
-fn create_camera(width: u32, height: u32) -> Camera<f32> {
+fn create_camera(width: u32, height: u32) -> PerspFovCamera<f32> {
     let near = 0.1;
     let far = 100.0;
     let fovy = Degrees(67.0);
     let aspect = width as f32 / height as f32;
-    let spec = CameraSpecification::new(near, far, fovy, aspect);
+    let model_spec = PerspectiveFovSpec::new(fovy, aspect, near, far);
 
-    let speed = 5.0;
-    let yaw_speed = 50.0;
     let position = Vector3::new(0.0, 0.0, 3.0);
-    let forward = Vector4::new(0.0, 0.0, 1.0, 0.0);
-    let right = Vector4::new(1.0, 0.0, 0.0, 0.0);
-    let up  = Vector4::new(0.0, 1.0, 0.0, 0.0);
-    let axis = Quaternion::new(0.0, 0.0, 0.0, -1.0);
-    let kinematics = CameraKinematics::new(speed, yaw_speed, position, forward, right, up, axis);
+    let forward = Vector3::new(0.0, 0.0, 1.0);
+    let right = Vector3::new(1.0, 0.0, 0.0);
+    let up  = Vector3::new(0.0, 1.0, 0.0);
+    let axis = Vector3::new(0.0, 0.0, -1.0);
+    let attitude_spec = CameraAttitudeSpec::new(position, forward, right, up, axis);
 
-    Camera::new(spec, kinematics)
+    let movement_speed = 5.0;
+    let rotation_speed = Degrees(50.0);
+    let kinematics_spec = FreeKinematicsSpec::new(movement_speed, rotation_speed);
+
+    Camera::new(&model_spec, &attitude_spec, &kinematics_spec)
 }
 
 struct Light {
@@ -264,7 +272,7 @@ fn send_to_gpu_uniforms_mesh(shader: GLuint, model_mat: &Matrix4<f32>) {
     }
 }
 
-fn send_to_gpu_uniforms_camera(shader: GLuint, camera: &Camera<f32>) {
+fn send_to_gpu_uniforms_camera(shader: GLuint, camera: &PerspFovCamera<f32>) {
     let camera_proj_mat_loc = unsafe {
         gl::GetUniformLocation(shader, backend::gl_str("camera.proj_mat").as_ptr())
     };
@@ -276,8 +284,8 @@ fn send_to_gpu_uniforms_camera(shader: GLuint, camera: &Camera<f32>) {
 
     unsafe {
         gl::UseProgram(shader);
-        gl::UniformMatrix4fv(camera_proj_mat_loc, 1, gl::FALSE, camera.proj_mat.as_ptr());
-        gl::UniformMatrix4fv(camera_view_mat_loc, 1, gl::FALSE, camera.view_mat.as_ptr());
+        gl::UniformMatrix4fv(camera_proj_mat_loc, 1, gl::FALSE, camera.projection().as_ptr());
+        gl::UniformMatrix4fv(camera_view_mat_loc, 1, gl::FALSE, camera.view_matrix().as_ptr());
     }
 }
 
@@ -690,7 +698,7 @@ fn main() {
         context.glfw.poll_events();
         let (width, height) = context.window.get_framebuffer_size();
         if (width != context.width as i32) && (height != context.height as i32) {
-            camera.update_viewport(width as u32, height as u32);
+            camera.update_viewport(width as usize, height as usize);
             framebuffer_size_callback(&mut context, width as u32, height as u32);
         }
 
