@@ -35,10 +35,7 @@ use cglinalg::{
     Magnitude,
     Matrix4,
     Radians,
-    Array,
     Vector3,
-    Identity,
-    Zero,
     Unit,
 };
 use glfw::{

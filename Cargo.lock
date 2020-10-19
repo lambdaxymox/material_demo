@@ -44,8 +44,8 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
 name = "cglinalg"
-version = "0.11.8"
-source = "git+https://github.com/lambdaxymox/cglinalg#e9463d97c83e9a409d453ccb3f70ad081e99253e"
+version = "0.11.9"
+source = "git+https://github.com/lambdaxymox/cglinalg#e2f337c6eb83993f2e9a2c93d87d70d8c54c6dd1"
 dependencies = [
  "approx",
  "num-traits",
@@ -53,8 +53,8 @@ dependencies = [
 
 [[package]]
 name = "cgperspective"
-version = "0.1.14"
-source = "git+https://github.com/lambdaxymox/cgperspective#dfadd7651f49d62443754273729ee668d73a9aa3"
+version = "0.1.15"
+source = "git+https://github.com/lambdaxymox/cgperspective#9cc710f2d04ec194bebcc37ff87f5b8bba1adea7"
 dependencies = [
  "cglinalg",
  "num-traits",
