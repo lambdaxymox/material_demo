@@ -240,7 +240,7 @@ impl LightKinematics {
             &Unit::from_value(self.orbital_axis), Radians(self.orbital_speed * elapsed_seconds)
         );
         let rot_mat = Matrix4::from(q);
-        let new_position = rot_mat * (distance_from_scene_center * radial_vector).expand(1.0);
+        let new_position = rot_mat * (distance_from_scene_center * radial_vector).extend(1.0);
 
         self.position = new_position.contract();
     }
