@@ -53,8 +53,8 @@ dependencies = [
 
 [[package]]
 name = "cgwavefront_obj"
-version = "1.0.0"
-source = "git+https://github.com/lambdaxymox/cgwavefront_obj#140071cd38c591f77e77a983af254fb8ca29f2fd"
+version = "1.0.3"
+source = "git+https://github.com/lambdaxymox/cgwavefront_obj#64e492f384e4ba0dc522af1c9afd0354b20c3a3c"
 
 [[package]]
 name = "chrono"
@@ -100,13 +100,12 @@ dependencies = [
 
 [[package]]
 name = "glfw"
-version = "0.39.1"
+version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d26b0c94d75430f0e8f0359c3f669c89b79df6c291f999596fb07e536b41c050"
+checksum = "dbb254ad1715644ab078c94372405bf061358b97969635ef7b09cf6f9437843e"
 dependencies = [
  "bitflags",
  "glfw-sys",
- "libc",
  "log",
  "objc",
  "raw-window-handle",
@@ -174,8 +173,8 @@ dependencies = [
 
 [[package]]
 name = "mini_obj"
-version = "0.1.10"
-source = "git+https://github.com/lambdaxymox/mini_obj#f1f377faa5aad58fc18e5ef2a34c509988fc46a1"
+version = "0.1.11"
+source = "git+https://github.com/lambdaxymox/mini_obj#a099501e39234c4dde325c632d4a0c1cd13f0a3c"
 dependencies = [
  "obj",
  "obj_gen",
@@ -203,16 +202,16 @@ dependencies = [
 
 [[package]]
 name = "obj"
-version = "0.1.10"
-source = "git+https://github.com/lambdaxymox/mini_obj#f1f377faa5aad58fc18e5ef2a34c509988fc46a1"
+version = "0.1.11"
+source = "git+https://github.com/lambdaxymox/mini_obj#a099501e39234c4dde325c632d4a0c1cd13f0a3c"
 dependencies = [
  "cgwavefront_obj",
 ]
 
 [[package]]
 name = "obj_gen"
-version = "0.1.10"
-source = "git+https://github.com/lambdaxymox/mini_obj#f1f377faa5aad58fc18e5ef2a34c509988fc46a1"
+version = "0.1.11"
+source = "git+https://github.com/lambdaxymox/mini_obj#a099501e39234c4dde325c632d4a0c1cd13f0a3c"
 dependencies = [
  "obj",
 ]

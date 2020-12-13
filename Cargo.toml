@@ -5,7 +5,7 @@ authors = ["LambdaXymox <lambda.xymox@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-glfw = "0.39.1"
+glfw = "0.41.0"
 log = "0.4.11"
 file_logger = { git = "https://github.com/lambdaxymox/file-logger" }
 cglinalg = { git = "https://github.com/lambdaxymox/cglinalg" }
